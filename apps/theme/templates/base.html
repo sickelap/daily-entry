@@ -1,0 +1,16 @@
+{% load static tailwind_tags django_browser_reload %}
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+    <title>WT</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		{% tailwind_css %}
+	</head>
+	<body class="dark:bg-zinc-800 dark:text-gray-300">
+    {% block main %}{% endblock %}
+	</body>
+  {% django_browser_reload_script %}
+</html>
+
