@@ -1,3 +1,4 @@
+import logging
 from datetime import date
 
 from django.apps import apps
@@ -6,24 +7,33 @@ from django.contrib.auth.views import csrf_protect
 from django.shortcuts import render
 
 WeightEntry = apps.get_model("tracker.WeightEntry")
+logger = logging.getLogger(__name__)
 
 
 def get_last_entry_value(request):
-    last_entry = WeightEntry.objects.filter(user=request.user).latest("timestamp")
-    return last_entry.weight or 100
+    try:
+        last_entry = WeightEntry.objects.filter(user=request.user).latest("timestamp")
+        return last_entry.weight
+    except Exception as e:
+        logger.error(str(e))
+        return 100
 
 
 def get_todays_entries(request):
-    return WeightEntry.objects.filter(
-        user=request.user, timestamp__date=date.today()
-    ).order_by("-timestamp")
+    try:
+        return WeightEntry.objects.filter(
+            user=request.user, timestamp__date=date.today()
+        ).order_by("-timestamp")
+    except Exception as e:
+        logger.error(str(e))
+        return []
 
 
 def create_entry(request):
     if request.method == "POST":
         weight = float(request.POST.get("weight", None))
         if not weight:
-            raise Exception()
+            raise Exception(f"invalid weight {weight}")
         WeightEntry.objects.create(user=request.user, weight=weight)
 
 
@@ -31,7 +41,7 @@ def remove_entry(request):
     if request.method == "POST":
         id = float(request.POST.get("id", None))
         if not id:
-            raise Exception()
+            raise Exception(f"invalid id: {id}")
         WeightEntry.objects.filter(user=request.user, id=id).delete()
 
 
@@ -50,11 +60,7 @@ def index(request):
 @login_required
 @csrf_protect
 def create_weight_entry(request):
-    try:
-        create_entry(request)
-    except Exception:
-        return render(request, "unable to add entry")
-
+    create_entry(request)
     return render(
         request,
         "components/todays_entries.html",
@@ -65,11 +71,7 @@ def create_weight_entry(request):
 @login_required
 @csrf_protect
 def remove_weight_entry(request):
-    try:
-        remove_entry(request)
-    except Exception:
-        return render(request, f"unable to remove entry")
-
+    remove_entry(request)
     return render(
         request,
         "components/todays_entries.html",

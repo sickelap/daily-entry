@@ -2,16 +2,17 @@
 {% load app_template_tags %}
 
 {% block main %}
-  {% logout_button %}
+  {% include "partials/navbar.html" %}
 
-  <form hx-post="{% url 'create-weight-entry' %}" hx-target="#entries" hx-swap="innerHTML">
-    {% csrf_token %}
-    {% range_control value=last_value control_name="weight" %}
-    <button type="submit">Submit</button>
-  </form>
-
-  <div id="entries">
-    {% todays_entries entries %}
+  <div class="flex justify-center mt-5">
+    <div class="flex flex-col">
+      <div id="weight-entry-form">
+        {% weight_entry_form value=last_value %}
+      </div>
+      <div id="entries">
+        {% todays_entries entries %}
+      </div>
+    </div>
   </div>
 
 {% endblock %}

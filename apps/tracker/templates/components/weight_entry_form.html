@@ -1,0 +1,88 @@
+<div x-data="tenthStepper({ initial: {{ value }} })">
+  <form
+    hx-post="{% url 'create-weight-entry' %}"
+    hx-target="#entries"
+    hx-swap="innerHTML"
+    @submit="submit()"
+  >
+    {% csrf_token %}
+    <div class="flex items-center justify-between min-w-xs">
+      <button
+        type="button"
+        @mousedown="change('down')"
+        @mouseup="stop"
+        @mouseleave="stop"
+        class="btn btn-outline"
+      >
+        −
+      </button>
+      <span class="text-center text-3xl font-mono">
+        <span x-text="value.toFixed(1)"></span> kg.
+        <input type="hidden" name="weight" :value="value.toFixed(1)" />
+      </span>
+      <button
+        type="button"
+        @mousedown="change('up')"
+        @mouseup="stop"
+        @mouseleave="stop"
+        class="btn btn-outline"
+      >
+        +
+      </button>
+    </div>
+    <button
+      type="button"
+      class="btn btn-error btn-xs btn-outline btn-block mt-10"
+      @mousedown="reset"
+      :disabled="resetDisabled"
+    >
+      reset
+    </button>
+    <button class="btn btn-outline btn-block my-10" type="submit">Submit</button>
+  </form>
+</div>
+<script>
+  function tenthStepper({ initial = 0 }) {
+    return {
+      initial,
+      value: initial,
+      interval: null,
+      holdTimeout: null,
+      direction: null,
+
+      tick() {
+        if (this.direction === 'up') this.value += 0.1;
+        if (this.direction === 'down') this.value -= 0.1;
+        this.value = Math.round(this.value * 10) / 10;
+      },
+
+      change(dir) {
+        this.direction = dir;
+        this.tick(); // immediate tick
+        this.holdTimeout = setTimeout(() => {
+          this.interval = setInterval(() => this.tick(), 100);
+        }, 500);
+      },
+
+      stop() {
+        clearTimeout(this.holdTimeout);
+        clearInterval(this.interval);
+        this.interval = null;
+        this.holdTimeout = null;
+        this.direction = null;
+      },
+
+      reset() {
+        this.value = this.initial;
+      },
+
+      get resetDisabled() {
+        return this.value === this.initial;
+      },
+
+      submit() {
+        this.initial = this.value;
+      }
+    };
+  }
+</script>

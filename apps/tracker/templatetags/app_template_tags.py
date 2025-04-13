@@ -3,9 +3,9 @@ from django import template
 register = template.Library()
 
 
-@register.inclusion_tag("components/range_control.html")
-def range_control(value: int, control_name: str):
-    return {"value": value, "control_name": control_name}
+@register.inclusion_tag("components/weight_entry_form.html")
+def weight_entry_form(value: int):
+    return {"value": value}
 
 
 @register.inclusion_tag("components/logout_button.html")

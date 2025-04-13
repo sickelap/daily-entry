@@ -1,25 +1,29 @@
+{% load tz %}
 {% if entries|length == 0 %}
 
-  <h2>No entries today</h2>
+  <h1 class="text-center">No entries today</h1>
 
 {% else %}
 
-  <h2>Today's entries</h2>
-  <ul>
+  <ul class="list bg-base-100 rounded-box shadow-md">
+    
+    <li class="p-4 pb-2 text-xs opacity-60 tracking-wide">
+      <h1>Today's entries {% now "Y-m-d" %}</h1>
+    </li>
+    
     {% for entry in entries %}
-
-      <li>
-        <form hx-post="{% url 'remove-weight-entry' %}" hx-target="#entries" hx-swap="innerHTML">
-          {% csrf_token %}
-          <input type="hidden" name="id" value="{{ entry.id }}">
-
-          {{ entry.timestamp }}: {{ entry.weight }}
-          <button type="submit">x</button>
-
-        </form>
-      </li>
-
+    <li class="list-row flex items-center justify-between">
+      <input type="hidden" name="id" value="{{ entry.id }}">
+      <div>{{ entry.timestamp|date:"H:i:s" }}</div>
+      <div>{{ entry.weight }} kg.</div>
+      <form hx-post="{% url 'remove-weight-entry' %}" hx-target="#entries" hx-swap="innerHTML">
+        {% csrf_token %}
+        <input type="hidden" name="id" value="{{ entry.id }}">
+        <button class="btn btn-outline btn-error btn-xs" type="submit">x</button>
+      </form>
+    </li>
     {% endfor %}
+    
   </ul>
 
 {% endif %}
