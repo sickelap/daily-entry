@@ -10,6 +10,7 @@
     --color-red-300: oklch(80.8% 0.114 19.571);
     --color-red-500: oklch(63.7% 0.237 25.331);
     --color-blue-500: oklch(62.3% 0.214 259.815);
+    --color-blue-600: oklch(54.6% 0.245 262.881);
     --color-gray-100: oklch(96.7% 0.003 264.542);
     --color-gray-200: oklch(92.8% 0.006 264.531);
     --color-gray-300: oklch(87.2% 0.01 258.338);
@@ -281,11 +282,17 @@
   .mb-2 {
     margin-bottom: calc(var(--spacing) * 2);
   }
+  .ml-4 {
+    margin-left: calc(var(--spacing) * 4);
+  }
   .block {
     display: block;
   }
   .flex {
     display: flex;
+  }
+  .hidden {
+    display: none;
   }
   .h-8 {
     height: calc(var(--spacing) * 8);
@@ -365,6 +372,9 @@
   }
   .items-end {
     align-items: flex-end;
+  }
+  .justify-center {
+    justify-content: center;
   }
   .gap-3 {
     gap: calc(var(--spacing) * 3);
@@ -502,11 +512,19 @@
   .text-gray-700 {
     color: var(--color-gray-700);
   }
+  .text-white {
+    color: var(--color-white);
+  }
   .\[-ms-overflow-style\:none\] {
     -ms-overflow-style: none;
   }
   .\[scrollbar-width\:none\] {
     scrollbar-width: none;
+  }
+  @media (hover: hover) {
+    .hover\:bg-blue-600:hover {
+      background-color: var(--color-blue-600);
+    }
   }
   @media (hover: hover) {
     .hover\:bg-gray-300:hover {

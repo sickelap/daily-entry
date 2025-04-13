@@ -3,5 +3,15 @@
 
 {% block main %}
   {% logout_button %}
-  {% range_control value=90 %} 
+
+  <form hx-post="{% url 'create-weight-entry' %}" hx-target="#entries" hx-swap="innerHTML">
+    {% csrf_token %}
+    {% range_control value=last_value control_name="weight" %}
+    <button type="submit">Submit</button>
+  </form>
+
+  <div id="entries">
+    {% todays_entries entries %}
+  </div>
+
 {% endblock %}

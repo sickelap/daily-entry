@@ -1,0 +1,25 @@
+{% if entries|length == 0 %}
+
+  <h2>No entries today</h2>
+
+{% else %}
+
+  <h2>Today's entries</h2>
+  <ul>
+    {% for entry in entries %}
+
+      <li>
+        <form hx-post="{% url 'remove-weight-entry' %}" hx-target="#entries" hx-swap="innerHTML">
+          {% csrf_token %}
+          <input type="hidden" name="id" value="{{ entry.id }}">
+
+          {{ entry.timestamp }}: {{ entry.weight }}
+          <button type="submit">x</button>
+
+        </form>
+      </li>
+
+    {% endfor %}
+  </ul>
+
+{% endif %}
