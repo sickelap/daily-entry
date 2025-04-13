@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load app_template_tags %}
+
 {% block main %}
-hello!
+  {% range_control value=90 %} 
 {% endblock %}

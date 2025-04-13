@@ -1,0 +1,56 @@
+<div
+  x-data="tenthStepper({ initial: {{ value }} })"
+  class="flex items-center"
+>
+  <button
+    @mousedown="change('down')"
+    @mouseup="stop"
+    @mouseleave="stop"
+    class="px-5 py-3 border rounded"
+  >
+    −
+  </button>
+  <span class="text-center text-9xl font-mono px-10">
+    <span x-text="value.toFixed(1)"></span>
+  </span>
+  <button
+    @mousedown="change('up')"
+    @mouseup="stop"
+    @mouseleave="stop"
+    class="px-5 py-3 border rounded h-full"
+  >
+    +
+  </button>
+</div>
+<script>
+  function tenthStepper({ initial = 0 }) {
+    return {
+      value: initial,
+      interval: null,
+      holdTimeout: null,
+      direction: null,
+
+      tick() {
+        if (this.direction === 'up') this.value += 0.1;
+        if (this.direction === 'down') this.value -= 0.1;
+        this.value = Math.round(this.value * 10) / 10;
+      },
+
+      change(dir) {
+        this.direction = dir;
+        this.tick(); // immediate tick
+        this.holdTimeout = setTimeout(() => {
+          this.interval = setInterval(() => this.tick(), 100);
+        }, 500);
+      },
+
+      stop() {
+        clearTimeout(this.holdTimeout);
+        clearInterval(this.interval);
+        this.interval = null;
+        this.holdTimeout = null;
+        this.direction = null;
+      }
+    };
+  }
+</script>
