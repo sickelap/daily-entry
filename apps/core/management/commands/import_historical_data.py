@@ -20,7 +20,7 @@ class Command(BaseCommand):
         with open(options["csv_file"], newline="") as csvfile:
             reader = csv.reader(csvfile)
             for row in reader:
-                timestamp = parser.parse(row[0])
+                timestamp = parser.parse(row[0], dayfirst=True)
                 weight = row[1]
                 user = User.objects.filter(id=user_id).first()
                 self.stdout.write(f"{timestamp}, {weight}")
