@@ -3,9 +3,19 @@
   <div class="flex-1">
     <a class="btn btn-ghost text-xl">Weight Tracker</a>
   </div>
-  <div class="flex-none">
-    <ul class="menu menu-horizontal px-1">
-      <li>{% logout_button %}</li>
-    </ul>
+  <div class="flex gap-2">
+    <div class="dropdown dropdown-end">
+      <div tabindex="0" role="button" class="avatar avatar-placeholder">
+        <div class="bg-neutral text-neutral-content w-10 rounded-full">
+          <span class="text-sm">D</span>
+        </div>
+      </div>
+      <ul
+        tabindex="0"
+        class="menu dropdown-content z-1 shadow">
+        <li><a href="{% url 'admin:index' %}">Administration</a></li>
+        <li>{% logout_button %}</li>
+      </ul>
+    </div>
   </div>
 </div>
