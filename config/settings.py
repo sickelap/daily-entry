@@ -152,7 +152,8 @@ LOGGING = {
 
 TAILWIND_APP_NAME = "apps.theme"
 
-LOGIN_URL = "/auth/login/"
+LOGIN_URL = "/protected/login/"
+LOGOUT_REDIRECT_URL = "/protected/login/"
 LOGIN_REDIRECT_URL = "/"
 
 if DEBUG:
