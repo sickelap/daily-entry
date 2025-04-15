@@ -14,7 +14,7 @@
     {% for entry in entries %}
     <li class="list-row flex items-center justify-between">
       <input type="hidden" name="id" value="{{ entry.id }}">
-      <div>{{ entry.timestamp|date:"H:i:s" }}</div>
+      <div>{{ entry.timestamp|timezone:entry.user.timezone|date:"H:i:s" }}</div>
       <div>{{ entry.weight }} kg.</div>
       <form hx-post="{% url 'remove-weight-entry' %}" hx-target="#entries" hx-swap="innerHTML">
         {% csrf_token %}
