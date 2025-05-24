@@ -1,9 +1,8 @@
 from typing import Annotated, Optional
 
 from app.model import User
+from app.service import get_user
 from fastapi import Depends, FastAPI, HTTPException
-
-from .service import get_user
 
 app = FastAPI()
 
