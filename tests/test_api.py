@@ -1,7 +1,7 @@
 from app.config import AUTH_HEADER
 from app.model import Stats, User
 from dateutil import parser
-from sqlmodel import Session, select
+from sqlmodel import select
 from tests.conftest import INVALID_TOKEN, VALID_TOKEN
 
 
@@ -20,21 +20,20 @@ def test_get_stats_with_invalid_token(client):
     assert response.status_code == 403
 
 
-def test_add_stat(client, engine):
+def test_add_stat(client, session):
     headers = {AUTH_HEADER: VALID_TOKEN}
     payload = {"value": 123.4}
     response = client.post("/stats", headers=headers, json=payload)
     assert response.status_code == 200
-    with Session(engine) as session:
-        stats = session.exec(
-            select(Stats).join(User).where(User.token == VALID_TOKEN)
-        ).all()
-        assert stats is not None
-        assert len(stats) == 1
-        assert float(stats[0].value) == 123.4
+    stats = session.exec(
+        select(Stats).join(User).where(User.token == VALID_TOKEN)
+    ).all()
+    assert stats is not None
+    assert len(stats) == 1
+    assert float(stats[0].value) == 123.4
 
 
-def test_import_stats(client, engine):
+def test_import_stats(client, session):
     headers = {AUTH_HEADER: VALID_TOKEN}
     payload = [
         {"timestamp": 1, "value": 123.4},
@@ -43,18 +42,17 @@ def test_import_stats(client, engine):
     ]
     response = client.post("/import", headers=headers, json=payload)
     assert response.status_code == 200
-    with Session(engine) as session:
-        stats_in_db = session.exec(
-            select(Stats).join(User).where(User.token == VALID_TOKEN)
-        ).all()
-        assert stats_in_db is not None
-        assert len(stats_in_db) == len(payload)
-        for index, entry in enumerate(payload):
-            assert entry["timestamp"] == stats_in_db[index].timestamp
-            assert entry["value"] == float(stats_in_db[index].value)
+    stats_in_db = session.exec(
+        select(Stats).join(User).where(User.token == VALID_TOKEN)
+    ).all()
+    assert stats_in_db is not None
+    assert len(stats_in_db) == len(payload)
+    for index, entry in enumerate(payload):
+        assert entry["timestamp"] == stats_in_db[index].timestamp
+        assert entry["value"] == float(stats_in_db[index].value)
 
 
-def test_import_stats_with_string_timestamps(client, engine):
+def test_import_stats_with_string_timestamps(client, session):
     headers = {AUTH_HEADER: VALID_TOKEN}
     payload = [
         {"timestamp": "01/11/2025 08:01:55", "value": 123.4},
@@ -63,15 +61,14 @@ def test_import_stats_with_string_timestamps(client, engine):
     ]
     response = client.post("/import", headers=headers, json=payload)
     assert response.status_code == 200
-    with Session(engine) as session:
-        stats_in_db = session.exec(
-            select(Stats).join(User).where(User.token == VALID_TOKEN)
-        ).all()
-        assert stats_in_db is not None
-        assert len(stats_in_db) == len(payload)
-        for index, entry in enumerate(payload):
-            parsed_timestamp = int(
-                parser.parse(entry["timestamp"], dayfirst=True).timestamp()
-            )
-            assert parsed_timestamp == stats_in_db[index].timestamp
-            assert entry["value"] == float(stats_in_db[index].value)
+    stats_in_db = session.exec(
+        select(Stats).join(User).where(User.token == VALID_TOKEN)
+    ).all()
+    assert stats_in_db is not None
+    assert len(stats_in_db) == len(payload)
+    for index, entry in enumerate(payload):
+        parsed_timestamp = int(
+            parser.parse(entry["timestamp"], dayfirst=True).timestamp()
+        )
+        assert parsed_timestamp == stats_in_db[index].timestamp
+        assert entry["value"] == float(stats_in_db[index].value)

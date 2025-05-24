@@ -1,8 +1,7 @@
 import os
 
-from sqlmodel import SQLModel, create_engine
-
-from .model import *
+from app.model import *  # noqa: F403
+from sqlmodel import Session, SQLModel, create_engine
 
 DB_DSN = os.getenv("DB_DSN", "sqlite:///db.sqlite3")
 
@@ -11,6 +10,11 @@ engine = create_engine(DB_DSN, echo=True)
 
 def get_db():
     return engine
+
+
+def get_session():
+    with Session(engine) as session:
+        yield session
 
 
 SQLModel.metadata.create_all(engine)

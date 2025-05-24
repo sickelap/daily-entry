@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 import pytest
-from app.db import get_db
+from app.db import get_session
 from app.main import app
 from app.model import User
 from fastapi.testclient import TestClient
@@ -13,21 +13,21 @@ INVALID_TOKEN = "00000000-0000-0000-0000-000000000000"
 
 
 @pytest.fixture
-def engine():
+def session():
     _engine = create_engine(
         "sqlite:///:memory:",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
     SQLModel.metadata.create_all(_engine)
-    app.dependency_overrides[get_db] = lambda: _engine
-    yield _engine
-    app.dependency_overrides.clear()
+    with Session(_engine) as session:
+        app.dependency_overrides[get_session] = lambda: session
+        yield session
+        app.dependency_overrides.clear()
 
 
 @pytest.fixture
-def client(engine):
-    with Session(engine) as session:
-        session.add(User(id=uuid4(), token=VALID_TOKEN))
-        session.commit()
+def client(session):
+    session.add(User(id=uuid4(), token=VALID_TOKEN))
+    session.commit()
     return TestClient(app)
