@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 from app import exceptions
 from app.db import get_session
 from app.model import (
-    StatAddRequest,
+    StatEntry,
     StatImportEntry,
     Stats,
     User,
@@ -40,7 +40,7 @@ def get_user(
     return user
 
 
-def add_user_stat(db: Session, user: User, payload: StatAddRequest):
+def add_user_stat(db: Session, user: User, payload: StatEntry):
     stat = Stats(user=user, value=payload.value)
     db.add(stat)
     db.commit()

@@ -3,7 +3,7 @@ from typing import Annotated, List
 from app.config import AUTH_HEADER
 from app.db import get_session
 from app.model import (
-    StatAddRequest,
+    StatEntry,
     StatImportEntry,
     User,
     UserLoginRequest,
@@ -32,7 +32,7 @@ async def get_stats(user: Annotated[User, Depends(get_user)]):
 async def add_stat(
     user: Annotated[User, Depends(get_user)],
     db: Annotated[Session, Depends(get_session)],
-    payload: StatAddRequest,
+    payload: StatEntry,
 ):
     return add_user_stat(db, user, payload)
 

@@ -28,20 +28,22 @@ class Stats(SQLModel, table=True):
     user: User | None = Relationship(back_populates="stats")
 
 
-class StatAddRequest(BaseModel):
+class StatEntry(BaseModel):
     value: Decimal
 
 
-class StatImportEntry(BaseModel):
+class StatImportEntry(StatEntry):
     timestamp: int | str
-    value: Decimal
 
 
-class UserRegisterRequest(BaseModel):
+class EmailAndPassword(BaseModel):
     email: EmailStr
     password: str
 
 
-class UserLoginRequest(BaseModel):
-    email: EmailStr
-    password: str
+class UserRegisterRequest(EmailAndPassword):
+    pass
+
+
+class UserLoginRequest(EmailAndPassword):
+    pass

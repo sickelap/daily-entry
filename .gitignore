@@ -4,3 +4,4 @@ __pycache__
 .coverage
 htmlcov
 db.sqlite3
+.ruff_cache
