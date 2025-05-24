@@ -1,5 +1,5 @@
+from app.main import app, parse_token
 from fastapi.testclient import TestClient
-from main import app, parse_token
 
 
 def test_get_stats_anonymous():
