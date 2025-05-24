@@ -1,8 +1,24 @@
+from uuid import UUID
+
 from app.config import AUTH_HEADER
 from app.model import Stats, User
 from dateutil import parser
-from sqlmodel import select
-from tests.conftest import INVALID_TOKEN, VALID_TOKEN
+from fastapi.testclient import TestClient
+from sqlmodel import Session, select
+from tests.conftest import (
+    INVALID_TOKEN,
+    TEST_USER_EMAIL,
+    TEST_USER_PASSWORD,
+    VALID_TOKEN,
+)
+
+
+def isuuid(value: str) -> bool:
+    try:
+        UUID(value)
+        return True
+    except Exception:
+        return False
 
 
 def test_get_stats_anonymous(client):
@@ -26,7 +42,7 @@ def test_add_stat(client, session):
     response = client.post("/stats", headers=headers, json=payload)
     assert response.status_code == 200
     stats = session.exec(
-        select(Stats).join(User).where(User.token == VALID_TOKEN)
+        select(Stats).join(User).where(User.token == UUID(VALID_TOKEN))
     ).all()
     assert stats is not None
     assert len(stats) == 1
@@ -43,7 +59,7 @@ def test_import_stats(client, session):
     response = client.post("/import", headers=headers, json=payload)
     assert response.status_code == 200
     stats_in_db = session.exec(
-        select(Stats).join(User).where(User.token == VALID_TOKEN)
+        select(Stats).join(User).where(User.token == UUID(VALID_TOKEN))
     ).all()
     assert stats_in_db is not None
     assert len(stats_in_db) == len(payload)
@@ -62,7 +78,7 @@ def test_import_stats_with_string_timestamps(client, session):
     response = client.post("/import", headers=headers, json=payload)
     assert response.status_code == 200
     stats_in_db = session.exec(
-        select(Stats).join(User).where(User.token == VALID_TOKEN)
+        select(Stats).join(User).where(User.token == UUID(VALID_TOKEN))
     ).all()
     assert stats_in_db is not None
     assert len(stats_in_db) == len(payload)
@@ -72,3 +88,21 @@ def test_import_stats_with_string_timestamps(client, session):
         )
         assert parsed_timestamp == stats_in_db[index].timestamp
         assert entry["value"] == float(stats_in_db[index].value)
+
+
+def test_register_user(client: TestClient, session: Session):
+    payload = {"email": "user@local.host", "password": "userpw"}
+    response = client.post("/register", json=payload)
+    assert response.status_code == 201
+    assert response.headers.get(AUTH_HEADER) is not None
+    assert isuuid(response.headers.get(AUTH_HEADER))
+    user_in_db = session.exec(
+        select(User).where(User.email == "user@local.host")
+    ).one_or_none()
+    assert user_in_db is not None
+
+
+def test_register_user_with_same_email(client: TestClient):
+    payload = {"email": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD}
+    response = client.post("/register", json=payload)
+    assert response.status_code == 409

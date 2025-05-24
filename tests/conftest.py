@@ -1,15 +1,18 @@
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from app.db import get_session
 from app.main import app
 from app.model import User
+from app.service import hash_password
 from fastapi.testclient import TestClient
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
 VALID_TOKEN = "11111111-1111-1111-1111-111111111111"
 INVALID_TOKEN = "00000000-0000-0000-0000-000000000000"
+TEST_USER_EMAIL = "test@email.com"
+TEST_USER_PASSWORD = "testpw"
 
 
 @pytest.fixture
@@ -28,6 +31,13 @@ def session():
 
 @pytest.fixture
 def client(session):
-    session.add(User(id=uuid4(), token=VALID_TOKEN))
+    session.add(
+        User(
+            id=uuid4(),
+            email=TEST_USER_EMAIL,
+            password=hash_password(TEST_USER_PASSWORD),
+            token=UUID(VALID_TOKEN),
+        )
+    )
     session.commit()
     return TestClient(app)
