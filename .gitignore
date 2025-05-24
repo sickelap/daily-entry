@@ -5,3 +5,4 @@ __pycache__
 htmlcov
 db.sqlite3
 .ruff_cache
+*.csv
