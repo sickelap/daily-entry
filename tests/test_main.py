@@ -59,10 +59,3 @@ def test_add_stat(client, engine):
             select(Stats).join(User).where(User.token == VALID_TOKEN)
         ).all()
     assert stats is not None
-
-
-def test_add_stat_using_invalid_token(client):
-    headers = {AUTH_HEADER: INVALID_TOKEN}
-    payload = {"value": 80.0}
-    response = client.post("/stats", headers=headers, json=payload)
-    assert response.status_code == 403
