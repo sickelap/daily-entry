@@ -8,10 +8,6 @@ DB_DSN = os.getenv("DB_DSN", "sqlite:///db.sqlite3")
 engine = create_engine(DB_DSN, echo=True)
 
 
-def get_db():
-    return engine
-
-
 def get_session():
     with Session(engine) as session:
         yield session
