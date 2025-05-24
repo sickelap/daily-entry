@@ -1,6 +1,6 @@
 import os
 
-from app.model import *  # noqa: F403
+from app.model import *  # noqa
 from sqlmodel import Session, SQLModel, create_engine
 
 DB_DSN = os.getenv("DB_DSN", "sqlite:///db.sqlite3")
