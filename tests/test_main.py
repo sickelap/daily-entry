@@ -5,6 +5,7 @@ from app.config import AUTH_HEADER
 from app.db import get_db
 from app.main import app
 from app.model import Stats, User
+from dateutil import parser
 from fastapi.testclient import TestClient
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine, select
@@ -80,4 +81,27 @@ def test_import_stats(client, engine):
         assert len(stats_in_db) == len(payload)
         for index, entry in enumerate(payload):
             assert entry["timestamp"] == stats_in_db[index].timestamp
+            assert entry["value"] == float(stats_in_db[index].value)
+
+
+def test_import_stats_with_string_timestamps(client, engine):
+    headers = {AUTH_HEADER: VALID_TOKEN}
+    payload = [
+        {"timestamp": "01/11/2025 08:01:55", "value": 123.4},
+        {"timestamp": "02/11/2025 09:19:28", "value": 123.5},
+        {"timestamp": "03/11/2025 10:11:11", "value": 123.6},
+    ]
+    response = client.post("/import", headers=headers, json=payload)
+    assert response.status_code == 200
+    with Session(engine) as session:
+        stats_in_db = session.exec(
+            select(Stats).join(User).where(User.token == VALID_TOKEN)
+        ).all()
+        assert stats_in_db is not None
+        assert len(stats_in_db) == len(payload)
+        for index, entry in enumerate(payload):
+            parsed_timestamp = int(
+                parser.parse(entry["timestamp"], dayfirst=True).timestamp()
+            )
+            assert parsed_timestamp == stats_in_db[index].timestamp
             assert entry["value"] == float(stats_in_db[index].value)

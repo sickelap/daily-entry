@@ -2,6 +2,7 @@ from typing import Annotated, List, Optional
 
 from app.db import get_db
 from app.model import StatAddRequest, StatImportEntry, Stats, User
+from dateutil import parser
 from fastapi import Depends, Header, HTTPException
 from sqlalchemy import Engine
 from sqlmodel import Session, select
@@ -31,6 +32,12 @@ def add_user_stat(db: Engine, user: User, payload: StatAddRequest):
 def import_user_stats(db: Engine, user: User, payload: List[StatImportEntry]):
     with Session(db) as session:
         for entry in payload:
-            stat = Stats(user=user, value=entry.value, timestamp=entry.timestamp)
+            if isinstance(entry.timestamp, str):
+                timestamp = int(
+                    parser.parse(entry.timestamp, dayfirst=True).timestamp()
+                )
+            else:
+                timestamp = entry.timestamp
+            stat = Stats(user=user, value=entry.value, timestamp=timestamp)
             session.add(stat)
         session.commit()

@@ -37,5 +37,5 @@ class StatAddRequest(SQLModel):
 
 
 class StatImportEntry(SQLModel):
-    timestamp: int
+    timestamp: int | str
     value: Decimal
