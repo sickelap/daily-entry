@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from app.config import AUTH_HEADER
-from app.model import Stats, User
+from app.model import StatsEntity, UserEntity
 from dateutil import parser
 from fastapi.testclient import TestClient
 from sqlmodel import Session, delete, select
@@ -42,7 +42,9 @@ def test_add_stat(client, session):
     response = client.post("/stats", headers=headers, json=payload)
     assert response.status_code == 200
     stats = session.exec(
-        select(Stats).join(User).where(User.token == UUID(VALID_TOKEN))
+        select(StatsEntity)
+        .join(UserEntity)
+        .where(UserEntity.token == UUID(VALID_TOKEN))
     ).all()
     assert stats is not None
     assert len(stats) == 1
@@ -50,7 +52,7 @@ def test_add_stat(client, session):
 
 
 def test_import_stats(client, session):
-    session.exec(delete(Stats))
+    session.exec(delete(StatsEntity))
     headers = {AUTH_HEADER: VALID_TOKEN}
     payload = [
         {"timestamp": 1, "value": 123.4},
@@ -60,7 +62,9 @@ def test_import_stats(client, session):
     response = client.post("/import", headers=headers, json=payload)
     assert response.status_code == 200
     stats_in_db = session.exec(
-        select(Stats).join(User).where(User.token == UUID(VALID_TOKEN))
+        select(StatsEntity)
+        .join(UserEntity)
+        .where(UserEntity.token == UUID(VALID_TOKEN))
     ).all()
     assert stats_in_db is not None
     assert len(stats_in_db) == len(payload)
@@ -70,7 +74,7 @@ def test_import_stats(client, session):
 
 
 def test_import_stats_with_string_timestamps(client, session):
-    session.exec(delete(Stats))
+    session.exec(delete(StatsEntity))
     headers = {AUTH_HEADER: VALID_TOKEN}
     payload = [
         {"timestamp": "01/11/2025 08:01:55", "value": 123.4},
@@ -80,7 +84,9 @@ def test_import_stats_with_string_timestamps(client, session):
     response = client.post("/import", headers=headers, json=payload)
     assert response.status_code == 200
     stats_in_db = session.exec(
-        select(Stats).join(User).where(User.token == UUID(VALID_TOKEN))
+        select(StatsEntity)
+        .join(UserEntity)
+        .where(UserEntity.token == UUID(VALID_TOKEN))
     ).all()
     assert stats_in_db is not None
     assert len(stats_in_db) == len(payload)
@@ -99,7 +105,7 @@ def test_register_user(client: TestClient, session: Session):
     assert response.headers.get(AUTH_HEADER) is not None
     assert isuuid(response.headers.get(AUTH_HEADER))
     user_in_db = session.exec(
-        select(User).where(User.email == "user@local.host")
+        select(UserEntity).where(UserEntity.email == "user@local.host")
     ).one_or_none()
     assert user_in_db is not None
 

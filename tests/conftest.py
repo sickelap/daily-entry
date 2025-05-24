@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 import pytest
 from app.db import get_session
 from app.main import app
-from app.model import User
+from app.model import UserEntity
 from app.service import hash_password
 from fastapi.testclient import TestClient
 from sqlalchemy.pool import StaticPool
@@ -32,7 +32,7 @@ def session():
 @pytest.fixture(scope="session")
 def client(session):
     session.add(
-        User(
+        UserEntity(
             id=uuid4(),
             email=TEST_USER_EMAIL,
             password=hash_password(TEST_USER_PASSWORD),

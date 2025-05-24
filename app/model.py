@@ -8,24 +8,24 @@ from sqlalchemy import Column, String
 from sqlmodel import Field, Relationship, SQLModel
 
 
-class User(SQLModel, table=True):
-    __tablename__ = "user"
+class UserEntity(SQLModel, table=True):
+    __tablename__ = "user"  # type: ignore
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     token: UUID | None = Field(default_factory=uuid4)
     email: EmailStr = Field(sa_column=Column(String, unique=True, nullable=False))
     password: str
-    stats: List["Stats"] = Relationship(
+    stats: List["StatsEntity"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"lazy": "selectin"}
     )
 
 
-class Stats(SQLModel, table=True):
-    __tablename__ = "stats"
+class StatsEntity(SQLModel, table=True):
+    __tablename__ = "stats"  # type: ignore
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     timestamp: int = Field(default_factory=lambda: int(datetime.now().timestamp()))
     value: Decimal = Field(default=0, max_digits=4, decimal_places=1)
     user_id: UUID | None = Field(default=None, foreign_key="user.id")
-    user: User | None = Relationship(back_populates="stats")
+    user: UserEntity | None = Relationship(back_populates="stats")
 
 
 class StatEntry(BaseModel):

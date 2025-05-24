@@ -6,8 +6,8 @@ from app.db import get_session
 from app.model import (
     StatEntry,
     StatImportEntry,
-    Stats,
-    User,
+    StatsEntity,
+    UserEntity,
     UserLoginRequest,
     UserRegisterRequest,
 )
@@ -30,39 +30,39 @@ def verify_password(plaintext: str, hashed: str) -> bool:
 def get_user(
     db: Annotated[Session, Depends(get_session)],
     token: Annotated[str | None, Header()] = None,
-) -> Optional[User]:
+) -> Optional[UserEntity]:
     if not token:
         raise HTTPException(status_code=403)
-    stmt = select(User).where(User.token == UUID(token))
+    stmt = select(UserEntity).where(UserEntity.token == UUID(token))
     user = db.exec(stmt).one_or_none()
     if not user:
         raise HTTPException(status_code=403)
     return user
 
 
-def add_user_stat(db: Session, user: User, payload: StatEntry):
-    stat = Stats(user=user, value=payload.value)
+def add_user_stat(db: Session, user: UserEntity, payload: StatEntry):
+    stat = StatsEntity(user=user, value=payload.value)
     db.add(stat)
     db.commit()
 
 
-def import_user_stats(db: Session, user: User, payload: List[StatImportEntry]):
+def import_user_stats(db: Session, user: UserEntity, payload: List[StatImportEntry]):
     for entry in payload:
         if isinstance(entry.timestamp, str):
             timestamp = int(parser.parse(entry.timestamp, dayfirst=True).timestamp())
         else:
             timestamp = entry.timestamp
-        stat = Stats(user=user, value=entry.value, timestamp=timestamp)
+        stat = StatsEntity(user=user, value=entry.value, timestamp=timestamp)
         db.add(stat)
     db.commit()
 
 
 def create_user(db: Session, payload: UserRegisterRequest) -> str:
-    stmt = select(User).where(User.email == payload.email)
+    stmt = select(UserEntity).where(UserEntity.email == payload.email)
     user = db.exec(stmt).one_or_none()
     if user:
         raise exceptions.EmailAlreadyExist
-    user = User(email=payload.email, password=hash_password(payload.password))
+    user = UserEntity(email=payload.email, password=hash_password(payload.password))
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -70,14 +70,14 @@ def create_user(db: Session, payload: UserRegisterRequest) -> str:
 
 
 def get_user_token(db: Session, payload: UserLoginRequest) -> str:
-    stmt = select(User).where(User.email == payload.email)
+    stmt = select(UserEntity).where(UserEntity.email == payload.email)
     user = db.exec(stmt).one_or_none()
     if not user or not verify_password(payload.password, user.password):
         raise exceptions.InvalidCredentials
     return str(user.token)
 
 
-def rotate_user_token(db: Session, user: User) -> str:
+def rotate_user_token(db: Session, user: UserEntity) -> str:
     user.token = uuid4()
     db.add(user)
     db.commit()

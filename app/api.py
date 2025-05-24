@@ -5,7 +5,7 @@ from app.db import get_session
 from app.model import (
     StatEntry,
     StatImportEntry,
-    User,
+    UserEntity,
     UserLoginRequest,
     UserRegisterRequest,
 )
@@ -24,13 +24,13 @@ router = APIRouter()
 
 
 @router.get("/stats")
-async def get_stats(user: Annotated[User, Depends(get_user)]):
-    return user
+async def get_stats(user: Annotated[UserEntity, Depends(get_user)]):
+    return user.stats
 
 
 @router.post("/stats")
 async def add_stat(
-    user: Annotated[User, Depends(get_user)],
+    user: Annotated[UserEntity, Depends(get_user)],
     db: Annotated[Session, Depends(get_session)],
     payload: StatEntry,
 ):
@@ -39,7 +39,7 @@ async def add_stat(
 
 @router.post("/import")
 async def import_stats(
-    user: Annotated[User, Depends(get_user)],
+    user: Annotated[UserEntity, Depends(get_user)],
     db: Annotated[Session, Depends(get_session)],
     payload: Annotated[List[StatImportEntry], Body()],
 ):
@@ -64,7 +64,7 @@ async def login(
 
 @router.post("/token/rotate")
 async def rotate_token(
-    user: Annotated[User, Depends(get_user)],
+    user: Annotated[UserEntity, Depends(get_user)],
     db: Annotated[Session, Depends(get_session)],
 ):
     new_token = rotate_user_token(db, user)
