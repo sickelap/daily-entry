@@ -4,7 +4,7 @@ from app.config import AUTH_HEADER
 from app.model import Stats, User
 from dateutil import parser
 from fastapi.testclient import TestClient
-from sqlmodel import Session, select
+from sqlmodel import Session, delete, select
 from tests.conftest import (
     INVALID_TOKEN,
     TEST_USER_EMAIL,
@@ -50,6 +50,7 @@ def test_add_stat(client, session):
 
 
 def test_import_stats(client, session):
+    session.exec(delete(Stats))
     headers = {AUTH_HEADER: VALID_TOKEN}
     payload = [
         {"timestamp": 1, "value": 123.4},
@@ -69,6 +70,7 @@ def test_import_stats(client, session):
 
 
 def test_import_stats_with_string_timestamps(client, session):
+    session.exec(delete(Stats))
     headers = {AUTH_HEADER: VALID_TOKEN}
     payload = [
         {"timestamp": "01/11/2025 08:01:55", "value": 123.4},

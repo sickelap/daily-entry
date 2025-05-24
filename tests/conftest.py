@@ -15,7 +15,7 @@ TEST_USER_EMAIL = "test@email.com"
 TEST_USER_PASSWORD = "testpw"
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def session():
     _engine = create_engine(
         "sqlite:///:memory:",
@@ -29,7 +29,7 @@ def session():
         app.dependency_overrides.clear()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def client(session):
     session.add(
         User(
