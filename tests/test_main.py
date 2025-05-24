@@ -13,7 +13,7 @@ VALID_TOKEN = "11111111-1111-1111-1111-111111111111"
 INVALID_TOKEN = "00000000-0000-0000-0000-000000000000"
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def engine():
     _engine = create_engine(
         "sqlite:///:memory:",
@@ -26,7 +26,7 @@ def engine():
     app.dependency_overrides.clear()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def client(engine):
     with Session(engine) as session:
         session.add(User(id=uuid4(), token=VALID_TOKEN))
@@ -51,11 +51,13 @@ def test_get_stats_with_invalid_token(client):
 
 def test_add_stat(client, engine):
     headers = {AUTH_HEADER: VALID_TOKEN}
-    payload = {"value": 80.0}
+    payload = {"value": 123.4}
     response = client.post("/stats", headers=headers, json=payload)
     assert response.status_code == 200
     with Session(engine) as session:
         stats = session.exec(
             select(Stats).join(User).where(User.token == VALID_TOKEN)
         ).all()
-    assert stats is not None
+        assert stats is not None
+        assert len(stats) == 1
+        assert float(stats[0].value) == 123.4
