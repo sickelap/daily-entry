@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [[ $1 == "watch" ]]; then
-  ptw
+  ptw -- --cov
 else
-  pytest
+  pytest --cov
 fi
