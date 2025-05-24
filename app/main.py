@@ -3,7 +3,7 @@ from app.api import router as api_router
 from fastapi import FastAPI, Response
 from httpx import Request
 
-app = FastAPI()
+app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 app.include_router(api_router)
 
 
