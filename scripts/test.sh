@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [[ $1 == "watch" ]]; then
-  ptw -- --cov
+  ptw -- --cov --cov-report=html --cov-report=term
 else
-  pytest --cov
+  pytest --cov --cov-report=html --cov-report=term
 fi
