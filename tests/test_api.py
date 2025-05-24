@@ -119,3 +119,12 @@ def test_login_user_with_invalid_credentials(client: TestClient):
     payload = {"email": "bob@bob.inc", "password": "bobpw"}
     response = client.post("/token", json=payload)
     assert response.status_code == 401
+
+
+def test_rotate_token(client: TestClient):
+    headers = {AUTH_HEADER: VALID_TOKEN}
+    response = client.post("/token/rotate", headers=headers)
+    assert response.status_code == 200
+    refreshed_token = response.json().get(AUTH_HEADER)
+    assert isuuid(refreshed_token), "not a token"
+    assert refreshed_token != VALID_TOKEN

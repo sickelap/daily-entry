@@ -15,6 +15,7 @@ from app.service import (
     get_user,
     get_user_token,
     import_user_stats,
+    rotate_user_token,
 )
 from fastapi import APIRouter, Body, Depends, Response
 from sqlmodel import Session
@@ -59,3 +60,12 @@ async def login(
 ):
     token = get_user_token(db, payload)
     return {AUTH_HEADER: token}
+
+
+@router.post("/token/rotate")
+async def rotate_token(
+    user: Annotated[User, Depends(get_user)],
+    db: Annotated[Session, Depends(get_session)],
+):
+    new_token = rotate_user_token(db, user)
+    return {AUTH_HEADER: new_token}

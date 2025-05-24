@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
-VALID_TOKEN = "11111111-1111-1111-1111-111111111111"
+VALID_TOKEN = "bf9cf100-5ea6-485f-be35-4ccedc6ddc84"
 INVALID_TOKEN = "00000000-0000-0000-0000-000000000000"
 TEST_USER_EMAIL = "test@email.com"
 TEST_USER_PASSWORD = "testpw"

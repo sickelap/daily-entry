@@ -1,5 +1,5 @@
 from typing import Annotated, List, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from app import exceptions
 from app.db import get_session
@@ -74,4 +74,12 @@ def get_user_token(db: Session, payload: UserLoginRequest) -> str:
     user = db.exec(stmt).one_or_none()
     if not user or not verify_password(payload.password, user.password):
         raise exceptions.InvalidCredentials
+    return str(user.token)
+
+
+def rotate_user_token(db: Session, user: User) -> str:
+    user.token = uuid4()
+    db.add(user)
+    db.commit()
+    db.refresh(user)
     return str(user.token)
