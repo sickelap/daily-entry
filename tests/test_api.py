@@ -106,3 +106,16 @@ def test_register_user_with_same_email(client: TestClient):
     payload = {"email": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD}
     response = client.post("/register", json=payload)
     assert response.status_code == 409
+
+
+def test_login_user(client: TestClient):
+    payload = {"email": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD}
+    response = client.post("/token", json=payload)
+    assert response.status_code == 200
+    assert isuuid(response.json().get(AUTH_HEADER)), "not a token"
+
+
+def test_login_user_with_invalid_credentials(client: TestClient):
+    payload = {"email": "bob@bob.inc", "password": "bobpw"}
+    response = client.post("/token", json=payload)
+    assert response.status_code == 401

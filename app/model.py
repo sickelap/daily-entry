@@ -40,3 +40,8 @@ class StatImportEntry(BaseModel):
 class UserRegisterRequest(BaseModel):
     email: EmailStr
     password: str
+
+
+class UserLoginRequest(BaseModel):
+    email: EmailStr
+    password: str

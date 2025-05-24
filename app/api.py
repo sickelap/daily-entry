@@ -2,8 +2,20 @@ from typing import Annotated, List
 
 from app.config import AUTH_HEADER
 from app.db import get_session
-from app.model import StatAddRequest, StatImportEntry, User, UserRegisterRequest
-from app.service import add_user_stat, create_user, get_user, import_user_stats
+from app.model import (
+    StatAddRequest,
+    StatImportEntry,
+    User,
+    UserLoginRequest,
+    UserRegisterRequest,
+)
+from app.service import (
+    add_user_stat,
+    create_user,
+    get_user,
+    get_user_token,
+    import_user_stats,
+)
 from fastapi import APIRouter, Body, Depends, Response
 from sqlmodel import Session
 
@@ -39,3 +51,11 @@ async def register(
 ):
     token = create_user(db, payload)
     return Response(status_code=201, headers={AUTH_HEADER: token})
+
+
+@router.post("/token")
+async def login(
+    db: Annotated[Session, Depends(get_session)], payload: UserLoginRequest
+):
+    token = get_user_token(db, payload)
+    return {AUTH_HEADER: token}

@@ -3,7 +3,14 @@ from uuid import UUID
 
 from app import exceptions
 from app.db import get_session
-from app.model import StatAddRequest, StatImportEntry, Stats, User, UserRegisterRequest
+from app.model import (
+    StatAddRequest,
+    StatImportEntry,
+    Stats,
+    User,
+    UserLoginRequest,
+    UserRegisterRequest,
+)
 from dateutil import parser
 from fastapi import Depends, Header, HTTPException
 from passlib.context import CryptContext
@@ -16,8 +23,8 @@ def hash_password(plaintext: str) -> str:
     return crypt_context.hash(plaintext)
 
 
-# def veryfy_password(plaintext: str, hashed: str) -> bool:
-#     return crypt_context.verify(plaintext, hashed)
+def verify_password(plaintext: str, hashed: str) -> bool:
+    return crypt_context.verify(plaintext, hashed)
 
 
 def get_user(
@@ -59,4 +66,12 @@ def create_user(db: Session, payload: UserRegisterRequest) -> str:
     db.add(user)
     db.commit()
     db.refresh(user)
+    return str(user.token)
+
+
+def get_user_token(db: Session, payload: UserLoginRequest) -> str:
+    stmt = select(User).where(User.email == payload.email)
+    user = db.exec(stmt).one_or_none()
+    if not user or not verify_password(payload.password, user.password):
+        raise exceptions.InvalidCredentials
     return str(user.token)
