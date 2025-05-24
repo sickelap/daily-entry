@@ -34,3 +34,8 @@ class Stats(StatsBase, table=True):
 
 class StatAddRequest(SQLModel):
     value: Decimal
+
+
+class StatImportEntry(SQLModel):
+    timestamp: int
+    value: Decimal

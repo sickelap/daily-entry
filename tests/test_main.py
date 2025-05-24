@@ -61,3 +61,23 @@ def test_add_stat(client, engine):
         assert stats is not None
         assert len(stats) == 1
         assert float(stats[0].value) == 123.4
+
+
+def test_import_stats(client, engine):
+    headers = {AUTH_HEADER: VALID_TOKEN}
+    payload = [
+        {"timestamp": 1, "value": 123.4},
+        {"timestamp": 2, "value": 123.5},
+        {"timestamp": 3, "value": 123.6},
+    ]
+    response = client.post("/import", headers=headers, json=payload)
+    assert response.status_code == 200
+    with Session(engine) as session:
+        stats_in_db = session.exec(
+            select(Stats).join(User).where(User.token == VALID_TOKEN)
+        ).all()
+        assert stats_in_db is not None
+        assert len(stats_in_db) == len(payload)
+        for index, entry in enumerate(payload):
+            assert entry["timestamp"] == stats_in_db[index].timestamp
+            assert entry["value"] == float(stats_in_db[index].value)

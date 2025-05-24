@@ -1,9 +1,9 @@
-from typing import Annotated
+from typing import Annotated, List
 
 from app.db import get_db
-from app.model import StatAddRequest, User
-from app.service import add_user_stat, get_user
-from fastapi import Depends, FastAPI
+from app.model import StatAddRequest, StatImportEntry, User
+from app.service import add_user_stat, get_user, import_user_stats
+from fastapi import Body, Depends, FastAPI
 from sqlalchemy import Engine
 
 app = FastAPI()
@@ -21,3 +21,12 @@ async def add_stat(
     payload: StatAddRequest,
 ):
     return add_user_stat(db, user, payload)
+
+
+@app.post("/import")
+async def import_stats(
+    user: Annotated[User, Depends(get_user)],
+    db: Annotated[Engine, Depends(get_db)],
+    payload: Annotated[List[StatImportEntry], Body()],
+):
+    return import_user_stats(db, user, payload)
