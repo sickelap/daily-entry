@@ -1,0 +1,48 @@
+---
+name: wtracker
+services:
+  migration:
+    build:
+      context: .
+    env_file: [.env]
+    ports: [8000:8000]
+    command: /app/manage.py migrate
+    volumes: [$PWD:/app]
+    depends_on:
+      db:
+        condition: service_healthy
+  app:
+    build:
+      context: .
+    env_file: [.env]
+    environment: [USE_SQLITE=False]
+    ports: [8000:8000]
+    command: /app/manage.py runserver 0.0.0.0:8000
+    volumes: [$PWD:/app]
+    healthcheck:
+      test: wget --spider -q http://127.0.0.1:8000
+      retries: 5
+      interval: 5s
+      timeout: 5s
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+  db:
+    image: postgres:17
+    env_file: [.env]
+    environment:
+      - POSTGRES_USER=$DB_USER
+      - POSTGRES_PASSWORD=$DB_PASS
+      - POSTGRES_DB=$DB_NAME
+    healthcheck:
+      test: pg_isready -U ${DB_USER}
+      retries: 5
+      interval: 5s
+      timeout: 5s
+  tailwind:
+    build:
+      context: .
+    depends_on:
+      app:
+        condition: service_healthy
+    command: /app/manage.py tailwind install && /app/manage.py tailwind start

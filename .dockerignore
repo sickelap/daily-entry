@@ -1,0 +1,6 @@
+*
+!requirements.txt
+!manage.py
+!**/*.py
+!**/*.css
+!**/*.html
