@@ -3,8 +3,8 @@ from typing import Annotated, List
 from app import config
 from app.db import get_session
 from app.model import (
-    StatEntry,
-    StatImportEntry,
+    AddStatRequest,
+    Stat,
     UserEntity,
     UserLoginRequest,
     UserRegisterRequest,
@@ -17,7 +17,7 @@ from app.service import (
     import_user_stats,
     rotate_user_token,
 )
-from fastapi import APIRouter, Body, Depends, Response
+from fastapi import APIRouter, Depends, Response
 from sqlmodel import Session
 
 router = APIRouter(prefix=config.API_PREFIX)
@@ -32,7 +32,7 @@ async def get_stats(user: Annotated[UserEntity, Depends(get_user)]):
 async def add_stat(
     user: Annotated[UserEntity, Depends(get_user)],
     db: Annotated[Session, Depends(get_session)],
-    payload: StatEntry,
+    payload: AddStatRequest,
 ):
     return add_user_stat(db, user, payload)
 
@@ -41,7 +41,7 @@ async def add_stat(
 async def import_stats(
     user: Annotated[UserEntity, Depends(get_user)],
     db: Annotated[Session, Depends(get_session)],
-    payload: Annotated[List[StatImportEntry], Body()],
+    payload: List[Stat],
 ):
     return import_user_stats(db, user, payload)
 

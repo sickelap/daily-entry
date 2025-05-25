@@ -1,11 +1,12 @@
+from datetime import datetime, timezone
 from typing import Annotated, List, Optional
 from uuid import UUID, uuid4
 
 from app import exceptions
 from app.db import get_session
 from app.model import (
-    StatEntry,
-    StatImportEntry,
+    AddStatRequest,
+    Stat,
     StatsEntity,
     UserEntity,
     UserLoginRequest,
@@ -40,19 +41,25 @@ def get_user(
     return user
 
 
-def add_user_stat(db: Session, user: UserEntity, payload: StatEntry):
+def add_user_stat(db: Session, user: UserEntity, payload: AddStatRequest):
     stat = StatsEntity(user=user, value=payload.value)
     db.add(stat)
     db.commit()
 
 
-def import_user_stats(db: Session, user: UserEntity, payload: List[StatImportEntry]):
+def _create_stat_entity(user: UserEntity, stat: Stat) -> StatsEntity:
+    if isinstance(stat.timestamp, str):
+        timestamp = int(parser.parse(stat.timestamp, dayfirst=True).timestamp())
+    elif isinstance(stat.timestamp, int):
+        timestamp = stat.timestamp
+    else:
+        timestamp = int(datetime.now(timezone.utc).timestamp())
+    return StatsEntity(user=user, value=stat.value, timestamp=timestamp)
+
+
+def import_user_stats(db: Session, user: UserEntity, payload: List[Stat]):
     for entry in payload:
-        if isinstance(entry.timestamp, str):
-            timestamp = int(parser.parse(entry.timestamp, dayfirst=True).timestamp())
-        else:
-            timestamp = entry.timestamp
-        stat = StatsEntity(user=user, value=entry.value, timestamp=timestamp)
+        stat = _create_stat_entity(user, entry)
         db.add(stat)
     db.commit()
 

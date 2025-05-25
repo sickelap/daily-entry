@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import List
+from typing import List, Optional
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, EmailStr
@@ -28,12 +28,13 @@ class StatsEntity(SQLModel, table=True):
     user: UserEntity | None = Relationship(back_populates="stats")
 
 
-class StatEntry(BaseModel):
+class AddStatRequest(BaseModel):
     value: Decimal
 
 
-class StatImportEntry(StatEntry):
-    timestamp: int | str
+class Stat(BaseModel):
+    timestamp: Optional[int | str]
+    value: Decimal
 
 
 class EmailAndPassword(BaseModel):
