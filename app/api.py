@@ -1,11 +1,9 @@
-from typing import Annotated, List
+from typing import Annotated
 from app import config
 from app import db
 from app.model import (
-    AddStatRequest,
     CreateMetricRequest,
     MetricResponse,
-    Stat,
     UserEntity,
     UserLoginRequest,
     UserRegisterRequest,
@@ -17,27 +15,22 @@ from sqlmodel import Session
 router = APIRouter(prefix=config.API_PREFIX)
 
 
-@router.get(config.GET_STATS_URI)
-async def get_stats(user: Annotated[UserEntity, Depends(service.get_user)]):
-    return user.values
-
-
-@router.post(config.ADD_STAT_URI)
-async def add_stat(
-    user: Annotated[UserEntity, Depends(service.get_user)],
-    db: Annotated[Session, Depends(db.get_session)],
-    payload: AddStatRequest,
-):
-    return service.add_user_stat(db, user, payload)
-
-
-@router.post(config.IMPORT_STATS_URI)
-async def import_stats(
-    user: Annotated[UserEntity, Depends(service.get_user)],
-    db: Annotated[Session, Depends(db.get_session)],
-    payload: List[Stat],
-):
-    return service.import_user_stats(db, user, payload)
+# @router.post(config.ADD_STAT_URI)
+# async def add_stat(
+#     user: Annotated[UserEntity, Depends(service.get_user)],
+#     db: Annotated[Session, Depends(db.get_session)],
+#     payload: AddStatRequest,
+# ):
+#     return service.add_user_stat(db, user, payload)
+#
+#
+# @router.post(config.IMPORT_STATS_URI)
+# async def import_stats(
+#     user: Annotated[UserEntity, Depends(service.get_user)],
+#     db: Annotated[Session, Depends(db.get_session)],
+#     payload: List[Stat],
+# ):
+#     return service.import_user_stats(db, user, payload)
 
 
 @router.post(config.REGISTER_URI)
