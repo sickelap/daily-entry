@@ -105,29 +105,15 @@ def get_metrics(db: Session, user: UserEntity) -> Sequence[MetricEntity]:
 def _create_value_entity(
     metric: MetricEntity, value: Decimal, timestamp: Optional[int | str] = None
 ) -> ValueEntity:
-    if isinstance(timestamp, str):
-        timestamp = int(parser.parse(timestamp, dayfirst=True).timestamp())
-    elif isinstance(timestamp, int):
-        timestamp = timestamp
-    else:
+    if timestamp is None:
         timestamp = int(datetime.now(timezone.utc).timestamp())
+    elif isinstance(timestamp, str):
+        timestamp = int(parser.parse(timestamp, dayfirst=True).timestamp())
     return ValueEntity(metric=metric, value=value, timestamp=timestamp)
 
 
-def add_value(db: Session, metric: MetricEntity, payload: ValueRequest):
-    value = _create_value_entity(metric, payload.value)
-    db.add(value)
+def add_values(db: Session, metric: MetricEntity, payload: list[ValueRequest]):
+    for entry in payload:
+        stat = _create_value_entity(metric, entry.value, timestamp=entry.timestamp)
+        db.add(stat)
     db.commit()
-
-
-# def import_user_stats(db: Session, user: UserEntity, payload: list[ValueRequest]):
-#     stmt = (
-#         select(MetricEntity)
-#         .where(MetricEntity.id == metric_id)
-#         .where(MetricEntity.user == user)
-#     )
-#     metric = db.exec(stmt).one()
-#     for entry in payload:
-#         stat = _create_value_entity(user, entry.value, timestamp=entry.timestamp)
-#         db.add(stat)
-#     db.commit()

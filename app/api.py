@@ -12,7 +12,7 @@ from app.model import (
     ValueRequest,
 )
 from app import service
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Body, Depends, Response
 from sqlmodel import Session
 
 router = APIRouter(prefix=config.API_PREFIX)
@@ -61,18 +61,9 @@ async def get_metrics(
 
 
 @router.post(config.VALUES_URI)
-async def add_value(
+async def add_values(
     db: Annotated[Session, Depends(db.get_session)],
     metric: Annotated[MetricEntity, Depends(service.get_metric)],
-    payload: ValueRequest,
+    payload: list[ValueRequest] = Body(...),
 ):
-    return service.add_value(db, metric, payload)
-
-
-# @router.post(config.IMPORT_STATS_URI)
-# async def import_stats(
-#     user: Annotated[UserEntity, Depends(service.get_user)],
-#     db: Annotated[Session, Depends(db.get_session)],
-#     payload: List[Stat],
-# ):
-#     return service.import_user_stats(db, user, payload)
+    return service.add_values(db, metric, payload)

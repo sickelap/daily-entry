@@ -23,7 +23,9 @@ class MetricEntity(SQLModel, table=True):
     user_id: int = Field(default=None, foreign_key="users.id")
     user: UserEntity = Relationship(back_populates="metrics")
     name: str = Field(index=True)
-    values: list["ValueEntity"] = Relationship(back_populates="metric")
+    values: list["ValueEntity"] = Relationship(
+        back_populates="metric", cascade_delete=True
+    )
 
 
 class ValueEntity(SQLModel, table=True):
@@ -33,17 +35,15 @@ class ValueEntity(SQLModel, table=True):
         default_factory=lambda: int(datetime.now(timezone.utc).timestamp())
     )
     value: Decimal = Field(default=0, max_digits=4, decimal_places=1)
-    metric_id: int | None = Field(default=None, foreign_key="metrics.id")
+    metric_id: Optional[int] = Field(
+        default=None, foreign_key="metrics.id", ondelete="CASCADE"
+    )
     metric: MetricEntity = Relationship(back_populates="values")
 
 
 class ValueRequest(BaseModel):
     value: Decimal
-
-
-class Stat(BaseModel):
-    timestamp: Optional[int | str]
-    value: Decimal
+    timestamp: Optional[int | str] = None
 
 
 class EmailAndPassword(BaseModel):

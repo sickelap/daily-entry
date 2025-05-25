@@ -7,7 +7,7 @@ from app.model import UserEntity
 from app.service import hash_password
 from fastapi.testclient import TestClient
 from sqlalchemy.pool import StaticPool
-from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel import Session, SQLModel, create_engine, text
 
 VALID_TOKEN = "bf9cf100-5ea6-485f-be35-4ccedc6ddc84"
 INVALID_TOKEN = "00000000-0000-0000-0000-000000000000"
@@ -25,6 +25,7 @@ def session():
     SQLModel.metadata.create_all(_engine)
     with Session(_engine) as session:
         app.dependency_overrides[get_session] = lambda: session
+        session.exec(text("PRAGMA foreign_keys = ON"))  # type: ignore
         yield session
         app.dependency_overrides.clear()
 
