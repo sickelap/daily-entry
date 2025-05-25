@@ -21,8 +21,8 @@ class UserEntity(SQLModel, table=True):
 class MetricEntity(SQLModel, table=True):
     __table_name__ = "metrics"  # type: ignore
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="users.id")
-    user: UserEntity | None = Relationship(back_populates="metrics")
+    user_id: int = Field(default=None, foreign_key="users.id")
+    user: UserEntity = Relationship(back_populates="metrics")
     name: str = Field(index=True)
     # values: list["ValueEntity"] = Relationship(back_populates="metric")
 
@@ -34,8 +34,8 @@ class ValueEntity(SQLModel, table=True):
         default_factory=lambda: int(datetime.now(timezone.utc).timestamp())
     )
     value: Decimal = Field(default=0, max_digits=4, decimal_places=1)
-    user_id: int | None = Field(default=None, foreign_key="users.id")
-    user: UserEntity | None = Relationship(back_populates="values")
+    user_id: int = Field(foreign_key="users.id")
+    user: UserEntity = Relationship(back_populates="values")
     # metric_id: int | None = Field(default=None, foreign_key="metrics.id")
     # metric: MetricEntity | None = Relationship(back_populates="values")
 
