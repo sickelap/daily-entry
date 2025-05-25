@@ -23,7 +23,7 @@ def isuuid(value: str) -> bool:
 
 def test_get_stats_anonymous(client):
     response = client.get(f"{config.API_PREFIX}{config.GET_STATS_URI}")
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 def test_get_stats_with_token(client):

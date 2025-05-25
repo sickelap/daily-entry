@@ -34,7 +34,7 @@ def get_user(
     token: Annotated[str | None, Header()] = None,
 ) -> Optional[UserEntity]:
     if not token:
-        raise HTTPException(status_code=403)
+        raise HTTPException(status_code=401)
     stmt = select(UserEntity).where(UserEntity.token == UUID(token))
     user = db.exec(stmt).one_or_none()
     if not user:
