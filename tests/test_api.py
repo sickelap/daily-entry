@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from app.config import AUTH_HEADER
+from app import config
 from app.model import StatsEntity, UserEntity
 from dateutil import parser
 from fastapi.testclient import TestClient
@@ -22,24 +22,32 @@ def isuuid(value: str) -> bool:
 
 
 def test_get_stats_anonymous(client):
-    response = client.get("/stats")
+    response = client.get(f"{config.API_PREFIX}{config.GET_STATS_URI}")
     assert response.status_code == 403
 
 
 def test_get_stats_with_token(client):
-    response = client.get("/stats", headers={AUTH_HEADER: VALID_TOKEN})
+    response = client.get(
+        f"{config.API_PREFIX}{config.GET_STATS_URI}",
+        headers={config.AUTH_HEADER: VALID_TOKEN},
+    )
     assert response.status_code == 200
 
 
 def test_get_stats_with_invalid_token(client):
-    response = client.get("/stats", headers={AUTH_HEADER: INVALID_TOKEN})
+    response = client.get(
+        f"{config.API_PREFIX}{config.GET_STATS_URI}",
+        headers={config.AUTH_HEADER: INVALID_TOKEN},
+    )
     assert response.status_code == 403
 
 
 def test_add_stat(client, session):
-    headers = {AUTH_HEADER: VALID_TOKEN}
+    headers = {config.AUTH_HEADER: VALID_TOKEN}
     payload = {"value": 123.4}
-    response = client.post("/stats", headers=headers, json=payload)
+    response = client.post(
+        f"{config.API_PREFIX}{config.ADD_STAT_URI}", headers=headers, json=payload
+    )
     assert response.status_code == 200
     stats = session.exec(
         select(StatsEntity)
@@ -53,13 +61,15 @@ def test_add_stat(client, session):
 
 def test_import_stats(client, session):
     session.exec(delete(StatsEntity))
-    headers = {AUTH_HEADER: VALID_TOKEN}
+    headers = {config.AUTH_HEADER: VALID_TOKEN}
     payload = [
         {"timestamp": 1, "value": 123.4},
         {"timestamp": 2, "value": 123.5},
         {"timestamp": 3, "value": 123.6},
     ]
-    response = client.post("/import", headers=headers, json=payload)
+    response = client.post(
+        f"{config.API_PREFIX}{config.IMPORT_STATS_URI}", headers=headers, json=payload
+    )
     assert response.status_code == 200
     stats_in_db = session.exec(
         select(StatsEntity)
@@ -75,13 +85,15 @@ def test_import_stats(client, session):
 
 def test_import_stats_with_string_timestamps(client, session):
     session.exec(delete(StatsEntity))
-    headers = {AUTH_HEADER: VALID_TOKEN}
+    headers = {config.AUTH_HEADER: VALID_TOKEN}
     payload = [
         {"timestamp": "01/11/2025 08:01:55", "value": 123.4},
         {"timestamp": "02/11/2025 09:19:28", "value": 123.5},
         {"timestamp": "03/11/2025 10:11:11", "value": 123.6},
     ]
-    response = client.post("/import", headers=headers, json=payload)
+    response = client.post(
+        f"{config.API_PREFIX}{config.IMPORT_STATS_URI}", headers=headers, json=payload
+    )
     assert response.status_code == 200
     stats_in_db = session.exec(
         select(StatsEntity)
@@ -100,10 +112,10 @@ def test_import_stats_with_string_timestamps(client, session):
 
 def test_register_user(client: TestClient, session: Session):
     payload = {"email": "user@local.host", "password": "userpw"}
-    response = client.post("/register", json=payload)
+    response = client.post(f"{config.API_PREFIX}{config.REGISTER_URI}", json=payload)
     assert response.status_code == 201
-    assert response.headers.get(AUTH_HEADER) is not None
-    assert isuuid(response.headers.get(AUTH_HEADER))
+    assert response.headers.get(config.AUTH_HEADER) is not None
+    assert isuuid(response.headers.get(config.AUTH_HEADER))
     user_in_db = session.exec(
         select(UserEntity).where(UserEntity.email == "user@local.host")
     ).one_or_none()
@@ -112,27 +124,29 @@ def test_register_user(client: TestClient, session: Session):
 
 def test_register_user_with_same_email(client: TestClient):
     payload = {"email": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD}
-    response = client.post("/register", json=payload)
+    response = client.post(f"{config.API_PREFIX}{config.REGISTER_URI}", json=payload)
     assert response.status_code == 409
 
 
 def test_login_user(client: TestClient):
     payload = {"email": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD}
-    response = client.post("/token", json=payload)
+    response = client.post(f"{config.API_PREFIX}{config.LOGIN_URI}", json=payload)
     assert response.status_code == 200
-    assert isuuid(response.json().get(AUTH_HEADER)), "not a token"
+    assert isuuid(response.json().get(config.AUTH_HEADER)), "not a token"
 
 
 def test_login_user_with_invalid_credentials(client: TestClient):
     payload = {"email": "bob@bob.inc", "password": "bobpw"}
-    response = client.post("/token", json=payload)
+    response = client.post(f"{config.API_PREFIX}{config.LOGIN_URI}", json=payload)
     assert response.status_code == 401
 
 
 def test_rotate_token(client: TestClient):
-    headers = {AUTH_HEADER: VALID_TOKEN}
-    response = client.post("/token/rotate", headers=headers)
+    headers = {config.AUTH_HEADER: VALID_TOKEN}
+    response = client.post(
+        f"{config.API_PREFIX}{config.REFRESH_TOKEN_URI}", headers=headers
+    )
     assert response.status_code == 200
-    refreshed_token = response.json().get(AUTH_HEADER)
+    refreshed_token = response.json().get(config.AUTH_HEADER)
     assert isuuid(refreshed_token), "not a token"
     assert refreshed_token != VALID_TOKEN

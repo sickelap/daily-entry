@@ -1,1 +1,9 @@
 AUTH_HEADER = "Token"
+
+API_PREFIX = "/api"
+LOGIN_URI = "/auth/login"
+REGISTER_URI = "/auth/register"
+REFRESH_TOKEN_URI = "/auth/refresh"
+GET_STATS_URI = "/stats"
+ADD_STAT_URI = "/stats"
+IMPORT_STATS_URI = "/stats/import"

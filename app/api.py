@@ -1,6 +1,6 @@
 from typing import Annotated, List
 
-from app.config import AUTH_HEADER
+from app import config
 from app.db import get_session
 from app.model import (
     StatEntry,
@@ -20,15 +20,15 @@ from app.service import (
 from fastapi import APIRouter, Body, Depends, Response
 from sqlmodel import Session
 
-router = APIRouter()
+router = APIRouter(prefix=config.API_PREFIX)
 
 
-@router.get("/stats")
+@router.get(config.GET_STATS_URI)
 async def get_stats(user: Annotated[UserEntity, Depends(get_user)]):
     return user.stats
 
 
-@router.post("/stats")
+@router.post(config.ADD_STAT_URI)
 async def add_stat(
     user: Annotated[UserEntity, Depends(get_user)],
     db: Annotated[Session, Depends(get_session)],
@@ -37,7 +37,7 @@ async def add_stat(
     return add_user_stat(db, user, payload)
 
 
-@router.post("/import")
+@router.post(config.IMPORT_STATS_URI)
 async def import_stats(
     user: Annotated[UserEntity, Depends(get_user)],
     db: Annotated[Session, Depends(get_session)],
@@ -46,26 +46,26 @@ async def import_stats(
     return import_user_stats(db, user, payload)
 
 
-@router.post("/register")
+@router.post(config.REGISTER_URI)
 async def register(
     db: Annotated[Session, Depends(get_session)], payload: UserRegisterRequest
 ):
     token = create_user(db, payload)
-    return Response(status_code=201, headers={AUTH_HEADER: token})
+    return Response(status_code=201, headers={config.AUTH_HEADER: token})
 
 
-@router.post("/token")
+@router.post(config.LOGIN_URI)
 async def login(
     db: Annotated[Session, Depends(get_session)], payload: UserLoginRequest
 ):
     token = get_user_token(db, payload)
-    return {AUTH_HEADER: token}
+    return {config.AUTH_HEADER: token}
 
 
-@router.post("/token/rotate")
+@router.post(config.REFRESH_TOKEN_URI)
 async def rotate_token(
     user: Annotated[UserEntity, Depends(get_user)],
     db: Annotated[Session, Depends(get_session)],
 ):
     new_token = rotate_user_token(db, user)
-    return {AUTH_HEADER: new_token}
+    return {config.AUTH_HEADER: new_token}
