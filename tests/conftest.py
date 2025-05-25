@@ -1,4 +1,4 @@
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import pytest
 from app.db import get_session
@@ -33,7 +33,6 @@ def session():
 def client(session):
     session.add(
         UserEntity(
-            id=uuid4(),
             email=TEST_USER_EMAIL,
             password=hash_password(TEST_USER_PASSWORD),
             token=UUID(VALID_TOKEN),
