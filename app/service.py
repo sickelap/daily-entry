@@ -8,7 +8,7 @@ from app.db import get_session
 from app.model import (
     AddStatRequest,
     Stat,
-    StatsEntity,
+    ValueEntity,
     UserEntity,
     UserLoginRequest,
     UserRegisterRequest,
@@ -44,14 +44,14 @@ def get_user(
 
 def _create_stat_entity(
     user: UserEntity, value: Decimal, timestamp: Optional[int | str] = None
-) -> StatsEntity:
+) -> ValueEntity:
     if isinstance(timestamp, str):
         timestamp = int(parser.parse(timestamp, dayfirst=True).timestamp())
     elif isinstance(timestamp, int):
         timestamp = timestamp
     else:
         timestamp = int(datetime.now(timezone.utc).timestamp())
-    return StatsEntity(user=user, value=value, timestamp=timestamp)
+    return ValueEntity(user=user, value=value, timestamp=timestamp)
 
 
 def add_user_stat(db: Session, user: UserEntity, payload: AddStatRequest):

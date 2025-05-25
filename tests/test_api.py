@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from app import config
-from app.model import StatsEntity, UserEntity
+from app.model import ValueEntity, UserEntity
 from dateutil import parser
 from fastapi.testclient import TestClient
 from sqlmodel import Session, delete, select
@@ -50,7 +50,7 @@ def test_add_stat(client, session):
     )
     assert response.status_code == 200
     stats = session.exec(
-        select(StatsEntity)
+        select(ValueEntity)
         .join(UserEntity)
         .where(UserEntity.token == UUID(VALID_TOKEN))
     ).all()
@@ -60,7 +60,7 @@ def test_add_stat(client, session):
 
 
 def test_import_stats(client, session):
-    session.exec(delete(StatsEntity))
+    session.exec(delete(ValueEntity))
     headers = {config.AUTH_HEADER: VALID_TOKEN}
     payload = [
         {"timestamp": 1, "value": 123.4},
@@ -72,7 +72,7 @@ def test_import_stats(client, session):
     )
     assert response.status_code == 200
     stats_in_db = session.exec(
-        select(StatsEntity)
+        select(ValueEntity)
         .join(UserEntity)
         .where(UserEntity.token == UUID(VALID_TOKEN))
     ).all()
@@ -84,7 +84,7 @@ def test_import_stats(client, session):
 
 
 def test_import_stats_with_string_timestamps(client, session):
-    session.exec(delete(StatsEntity))
+    session.exec(delete(ValueEntity))
     headers = {config.AUTH_HEADER: VALID_TOKEN}
     payload = [
         {"timestamp": "01/11/2025 08:01:55", "value": 123.4},
@@ -96,7 +96,7 @@ def test_import_stats_with_string_timestamps(client, session):
     )
     assert response.status_code == 200
     stats_in_db = session.exec(
-        select(StatsEntity)
+        select(ValueEntity)
         .join(UserEntity)
         .where(UserEntity.token == UUID(VALID_TOKEN))
     ).all()

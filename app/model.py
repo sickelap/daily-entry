@@ -14,7 +14,7 @@ class UserEntity(SQLModel, table=True):
     token: UUID | None = Field(default_factory=uuid4)
     email: EmailStr = Field(sa_column=Column(String, unique=True, nullable=False))
     password: str
-    stats: List["StatsEntity"] = Relationship(
+    stats: List["ValueEntity"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"lazy": "selectin"}
     )
     metrics: list["MetricEntity"] = Relationship(back_populates="user")
@@ -28,7 +28,7 @@ class MetricEntity(SQLModel, table=True):
     name: str = Field(index=True)
 
 
-class StatsEntity(SQLModel, table=True):
+class ValueEntity(SQLModel, table=True):
     __tablename__ = "stats"  # type: ignore
     id: int | None = Field(primary_key=True, default=None)
     timestamp: int = Field(default_factory=lambda: int(datetime.now().timestamp()))
