@@ -64,4 +64,5 @@ class CreateMetricRequest(BaseModel):
 
 
 class MetricResponse(BaseModel):
+    id: int
     name: str
