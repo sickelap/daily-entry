@@ -24,11 +24,11 @@ def import_entries(entries, url, email, password):
         url = f"http://{url}"
     with httpx.Client() as client:
         auth_payload = {"email": email, "password": password}
-        response = client.post(f"{url}/token", json=auth_payload)
+        response = client.post(f"{url}/api/auth/login", json=auth_payload)
         assert response.status_code == 200
         print("Authenticated")
         headers = {"Token": response.json().get("Token")}
-        response = client.post(f"{url}/import", json=entries, headers=headers)
+        response = client.post(f"{url}/api/stats/import", json=entries, headers=headers)
         assert response.status_code == 200
         print(f"imported {len(entries)} entries")
 
