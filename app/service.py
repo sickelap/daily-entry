@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Annotated, List, Optional
 from uuid import UUID, uuid4
 
@@ -41,25 +42,27 @@ def get_user(
     return user
 
 
+def _create_stat_entity(
+    user: UserEntity, value: Decimal, timestamp: Optional[int | str] = None
+) -> StatsEntity:
+    if isinstance(timestamp, str):
+        timestamp = int(parser.parse(timestamp, dayfirst=True).timestamp())
+    elif isinstance(timestamp, int):
+        timestamp = timestamp
+    else:
+        timestamp = int(datetime.now(timezone.utc).timestamp())
+    return StatsEntity(user=user, value=value, timestamp=timestamp)
+
+
 def add_user_stat(db: Session, user: UserEntity, payload: AddStatRequest):
-    stat = StatsEntity(user=user, value=payload.value)
+    stat = _create_stat_entity(user=user, value=payload.value)
     db.add(stat)
     db.commit()
 
 
-def _create_stat_entity(user: UserEntity, stat: Stat) -> StatsEntity:
-    if isinstance(stat.timestamp, str):
-        timestamp = int(parser.parse(stat.timestamp, dayfirst=True).timestamp())
-    elif isinstance(stat.timestamp, int):
-        timestamp = stat.timestamp
-    else:
-        timestamp = int(datetime.now(timezone.utc).timestamp())
-    return StatsEntity(user=user, value=stat.value, timestamp=timestamp)
-
-
 def import_user_stats(db: Session, user: UserEntity, payload: List[Stat]):
     for entry in payload:
-        stat = _create_stat_entity(user, entry)
+        stat = _create_stat_entity(user, entry.value, timestamp=entry.timestamp)
         db.add(stat)
     db.commit()
 
