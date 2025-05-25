@@ -41,7 +41,7 @@ def test_get_metrics_with_invalid_token(client):
         f"{config.API_PREFIX}{config.METRICS_URI}",
         headers={config.AUTH_HEADER: INVALID_TOKEN},
     )
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 def test_create_metric(client, session):

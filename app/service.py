@@ -35,11 +35,11 @@ def get_user(
     token: Annotated[str | None, Header()] = None,
 ) -> Optional[UserEntity]:
     if not token:
-        raise HTTPException(status_code=401)
+        raise exceptions.Unauthorized()
     stmt = select(UserEntity).where(UserEntity.token == UUID(token))
     user = db.exec(stmt).one_or_none()
     if not user:
-        raise HTTPException(status_code=403)
+        raise exceptions.Unauthorized()
     return user
 
 
@@ -75,7 +75,7 @@ def get_user_token(db: Session, payload: UserLoginRequest) -> str:
     stmt = select(UserEntity).where(UserEntity.email == payload.email)
     user = db.exec(stmt).one_or_none()
     if not user or not verify_password(payload.password, user.password):
-        raise exceptions.InvalidCredentials
+        raise exceptions.Unauthorized()
     return str(user.token)
 
 

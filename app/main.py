@@ -12,6 +12,6 @@ async def email_already_exist(request: Request, exc: exceptions.EmailAlreadyExis
     return Response(status_code=409)
 
 
-@app.exception_handler(exceptions.InvalidCredentials)
-async def invalid_credentials(request: Request, exc: exceptions.InvalidCredentials):
+@app.exception_handler(exceptions.Unauthorized)
+async def invalid_credentials(request: Request, exc: exceptions.Unauthorized):
     return Response(status_code=401)

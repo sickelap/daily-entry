@@ -6,5 +6,5 @@ class EmailDoesNotExist(Exception):
     pass
 
 
-class InvalidCredentials(Exception):
+class Unauthorized(Exception):
     pass
