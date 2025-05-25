@@ -15,7 +15,7 @@ TEST_USER_EMAIL = "test@email.com"
 TEST_USER_PASSWORD = "testpw"
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def session():
     _engine = create_engine(
         "sqlite:///:memory:",
@@ -29,14 +29,19 @@ def session():
         app.dependency_overrides.clear()
 
 
-@pytest.fixture(scope="session")
-def client(session):
-    session.add(
-        UserEntity(
-            email=TEST_USER_EMAIL,
-            password=hash_password(TEST_USER_PASSWORD),
-            token=UUID(VALID_TOKEN),
-        )
+@pytest.fixture(scope="session", autouse=True)
+def user(session):
+    user = UserEntity(
+        email=TEST_USER_EMAIL,
+        password=hash_password(TEST_USER_PASSWORD),
+        token=UUID(VALID_TOKEN),
     )
+    session.add(user)
     session.commit()
+    session.refresh(user)
+    return user
+
+
+@pytest.fixture(scope="session")
+def client():
     return TestClient(app)

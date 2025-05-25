@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Annotated, List, Optional
+from typing import Annotated, List, Optional, Sequence
 from uuid import UUID, uuid4
 
 from app import exceptions
@@ -97,7 +97,7 @@ def rotate_user_token(db: Session, user: UserEntity) -> str:
     return str(user.token)
 
 
-def create_user_metric(
+def create_metric(
     db: Session, user: UserEntity, payload: CreateMetricRequest
 ) -> MetricEntity:
     metric = MetricEntity(user=user, name=payload.name)
@@ -105,4 +105,8 @@ def create_user_metric(
     db.commit()
     db.refresh(metric)
     return metric
-    pass
+
+
+def get_metrics(db: Session, user: UserEntity) -> Sequence[MetricEntity]:
+    stmt = select(MetricEntity).where(MetricEntity.user == user)
+    return db.exec(stmt).all()

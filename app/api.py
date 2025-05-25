@@ -1,5 +1,6 @@
 from typing import Annotated, List
 
+
 from app import config
 from app.db import get_session
 from app.model import (
@@ -11,10 +12,10 @@ from app.model import (
     UserLoginRequest,
     UserRegisterRequest,
 )
+from app import service
 from app.service import (
     add_user_stat,
     create_user,
-    create_user_metric,
     get_user,
     get_user_token,
     import_user_stats,
@@ -80,4 +81,12 @@ async def create_metric(
     db: Annotated[Session, Depends(get_session)],
     payload: CreateMetricRequest,
 ):
-    return create_user_metric(db, user, payload)
+    return service.create_metric(db, user, payload)
+
+
+@router.get(config.GET_USER_METRICS_URI, response_model=list[MetricResponse])
+async def get_metrics(
+    user: Annotated[UserEntity, Depends(get_user)],
+    db: Annotated[Session, Depends(get_session)],
+):
+    return service.get_metrics(db, user)

@@ -1,5 +1,6 @@
 from uuid import UUID
 
+
 from app import config
 from app.model import MetricEntity, ValueEntity, UserEntity
 from dateutil import parser
@@ -75,6 +76,25 @@ def test_create_metric(client, session):
     assert metrics is not None
     assert len(metrics) == 1
     assert metrics[0].name == "height"
+
+
+def test_get_user_metrics(client, user, session):
+    session.exec(delete(MetricEntity))
+    session.add(MetricEntity(user=user, name="one"))
+    session.add(MetricEntity(user=user, name="two"))
+    session.commit()
+
+    headers = {config.AUTH_HEADER: VALID_TOKEN}
+    response = client.get(
+        f"{config.API_PREFIX}{config.CREATE_METRIC_URI}", headers=headers
+    )
+    assert response.status_code == 200
+    metrics = session.exec(
+        select(MetricEntity)
+        .join(UserEntity)
+        .where(UserEntity.token == UUID(VALID_TOKEN))
+    ).all()
+    assert len(response.json()) == len(metrics)
 
 
 def test_import_stats(client, session):
