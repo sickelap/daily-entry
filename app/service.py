@@ -15,7 +15,7 @@ from app.model import (
     ValueEntity,
     ValueRequest,
 )
-from fastapi import Depends, Header, HTTPException
+from fastapi import Depends, Header
 from passlib.context import CryptContext
 from sqlmodel import Session, select
 
@@ -55,7 +55,7 @@ def get_metric(
     )
     metric = db.exec(stmt).one_or_none()
     if not metric:
-        raise HTTPException(status_code=404, detail="metric not found")
+        raise exceptions.NotFound("metric not found")
     return metric
 
 
