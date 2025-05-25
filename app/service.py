@@ -1,21 +1,20 @@
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Annotated, List, Optional, Sequence
+from typing import Annotated, Optional, Sequence
 from uuid import UUID, uuid4
+from dateutil import parser
 
 from app import exceptions
 from app.db import get_session
 from app.model import (
-    AddStatRequest,
     CreateMetricRequest,
     MetricEntity,
-    Stat,
-    ValueEntity,
     UserEntity,
     UserLoginRequest,
     UserRegisterRequest,
+    ValueEntity,
+    ValueRequest,
 )
-from dateutil import parser
 from fastapi import Depends, Header, HTTPException
 from passlib.context import CryptContext
 from sqlmodel import Session, select
@@ -44,29 +43,20 @@ def get_user(
     return user
 
 
-def _create_stat_entity(
-    user: UserEntity, value: Decimal, timestamp: Optional[int | str] = None
-) -> ValueEntity:
-    if isinstance(timestamp, str):
-        timestamp = int(parser.parse(timestamp, dayfirst=True).timestamp())
-    elif isinstance(timestamp, int):
-        timestamp = timestamp
-    else:
-        timestamp = int(datetime.now(timezone.utc).timestamp())
-    return ValueEntity(user=user, value=value, timestamp=timestamp)
-
-
-def add_user_stat(db: Session, user: UserEntity, payload: AddStatRequest):
-    stat = _create_stat_entity(user=user, value=payload.value)
-    db.add(stat)
-    db.commit()
-
-
-def import_user_stats(db: Session, user: UserEntity, payload: List[Stat]):
-    for entry in payload:
-        stat = _create_stat_entity(user, entry.value, timestamp=entry.timestamp)
-        db.add(stat)
-    db.commit()
+def get_metric(
+    user: Annotated[UserEntity, Depends(get_user)],
+    db: Annotated[Session, Depends(get_session)],
+    metric_id,
+) -> Optional[MetricEntity]:
+    stmt = (
+        select(MetricEntity)
+        .where(MetricEntity.user == user)
+        .where(MetricEntity.id == metric_id)
+    )
+    metric = db.exec(stmt).one_or_none()
+    if not metric:
+        raise HTTPException(status_code=404, detail="metric not found")
+    return metric
 
 
 def create_user(db: Session, payload: UserRegisterRequest) -> str:
@@ -110,3 +100,34 @@ def create_metric(
 def get_metrics(db: Session, user: UserEntity) -> Sequence[MetricEntity]:
     stmt = select(MetricEntity).where(MetricEntity.user == user)
     return db.exec(stmt).all()
+
+
+def _create_value_entity(
+    metric: MetricEntity, value: Decimal, timestamp: Optional[int | str] = None
+) -> ValueEntity:
+    if isinstance(timestamp, str):
+        timestamp = int(parser.parse(timestamp, dayfirst=True).timestamp())
+    elif isinstance(timestamp, int):
+        timestamp = timestamp
+    else:
+        timestamp = int(datetime.now(timezone.utc).timestamp())
+    return ValueEntity(metric=metric, value=value, timestamp=timestamp)
+
+
+def add_value(db: Session, metric: MetricEntity, payload: ValueRequest):
+    value = _create_value_entity(metric, payload.value)
+    db.add(value)
+    db.commit()
+
+
+# def import_user_stats(db: Session, user: UserEntity, payload: list[ValueRequest]):
+#     stmt = (
+#         select(MetricEntity)
+#         .where(MetricEntity.id == metric_id)
+#         .where(MetricEntity.user == user)
+#     )
+#     metric = db.exec(stmt).one()
+#     for entry in payload:
+#         stat = _create_value_entity(user, entry.value, timestamp=entry.timestamp)
+#         db.add(stat)
+#     db.commit()

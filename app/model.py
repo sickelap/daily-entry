@@ -33,11 +33,11 @@ class ValueEntity(SQLModel, table=True):
         default_factory=lambda: int(datetime.now(timezone.utc).timestamp())
     )
     value: Decimal = Field(default=0, max_digits=4, decimal_places=1)
-    metric_id: int = Field(foreign_key="metrics.id")
+    metric_id: int | None = Field(default=None, foreign_key="metrics.id")
     metric: MetricEntity = Relationship(back_populates="values")
 
 
-class AddStatRequest(BaseModel):
+class ValueRequest(BaseModel):
     value: Decimal
 
 

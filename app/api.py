@@ -1,36 +1,21 @@
 from typing import Annotated
+
 from app import config
 from app import db
 from app.model import (
     CreateMetricRequest,
+    MetricEntity,
     MetricResponse,
     UserEntity,
     UserLoginRequest,
     UserRegisterRequest,
+    ValueRequest,
 )
 from app import service
 from fastapi import APIRouter, Depends, Response
 from sqlmodel import Session
 
 router = APIRouter(prefix=config.API_PREFIX)
-
-
-# @router.post(config.ADD_STAT_URI)
-# async def add_stat(
-#     user: Annotated[UserEntity, Depends(service.get_user)],
-#     db: Annotated[Session, Depends(db.get_session)],
-#     payload: AddStatRequest,
-# ):
-#     return service.add_user_stat(db, user, payload)
-#
-#
-# @router.post(config.IMPORT_STATS_URI)
-# async def import_stats(
-#     user: Annotated[UserEntity, Depends(service.get_user)],
-#     db: Annotated[Session, Depends(db.get_session)],
-#     payload: List[Stat],
-# ):
-#     return service.import_user_stats(db, user, payload)
 
 
 @router.post(config.REGISTER_URI)
@@ -58,7 +43,7 @@ async def rotate_token(
     return {config.AUTH_HEADER: new_token}
 
 
-@router.post(config.CREATE_METRIC_URI, response_model=MetricResponse)
+@router.post(config.METRICS_URI, response_model=MetricResponse)
 async def create_metric(
     user: Annotated[UserEntity, Depends(service.get_user)],
     db: Annotated[Session, Depends(db.get_session)],
@@ -67,9 +52,27 @@ async def create_metric(
     return service.create_metric(db, user, payload)
 
 
-@router.get(config.GET_USER_METRICS_URI, response_model=list[MetricResponse])
+@router.get(config.METRICS_URI, response_model=list[MetricResponse])
 async def get_metrics(
     user: Annotated[UserEntity, Depends(service.get_user)],
     db: Annotated[Session, Depends(db.get_session)],
 ):
     return service.get_metrics(db, user)
+
+
+@router.post(config.VALUES_URI)
+async def add_value(
+    db: Annotated[Session, Depends(db.get_session)],
+    metric: Annotated[MetricEntity, Depends(service.get_metric)],
+    payload: ValueRequest,
+):
+    return service.add_value(db, metric, payload)
+
+
+# @router.post(config.IMPORT_STATS_URI)
+# async def import_stats(
+#     user: Annotated[UserEntity, Depends(service.get_user)],
+#     db: Annotated[Session, Depends(db.get_session)],
+#     payload: List[Stat],
+# ):
+#     return service.import_user_stats(db, user, payload)
