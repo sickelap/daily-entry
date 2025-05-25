@@ -9,24 +9,28 @@ def parse_csv(file_path):
         reader = csv.reader(csvfile)
         entries = []
         for row in reader:
-            timestamp = parser.parse(row[0], dayfirst=True)
+            timestamp = int(parser.parse(row[0], dayfirst=True).timestamp())
             entries.append(
                 {
                     "timestamp": timestamp,
-                    "value": int(row[1]),
+                    "value": float(row[1]),
                 }
             )
         return entries
 
 
 def import_entries(entries, url, email, password):
+    if "http" not in url:
+        url = f"http://{url}"
     with httpx.Client() as client:
         auth_payload = {"email": email, "password": password}
-        response = client.post("/token", json=auth_payload)
+        response = client.post(f"{url}/token", json=auth_payload)
         assert response.status_code == 200
+        print("Authenticated")
         headers = {"Token": response.json().get("Token")}
-        response = client.post(url, json=entries, headers=headers)
-        assert response.status_code == 201
+        response = client.post(f"{url}/import", json=entries, headers=headers)
+        assert response.status_code == 200
+        print(f"imported {len(entries)} entries")
 
 
 def main():
