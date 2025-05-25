@@ -18,6 +18,16 @@ def isuuid(value: str) -> bool:
         return False
 
 
+def create_metric(session, user, name, clear=True):
+    if clear:
+        session.exec(delete(MetricEntity))
+    metric = MetricEntity(user=user, name=name)
+    session.add(metric)
+    session.commit()
+    session.refresh(metric)
+    return metric
+
+
 def test_get_metrics_as_anonymous(client):
     response = client.get(f"{config.API_PREFIX}{config.METRICS_URI}")
     assert response.status_code == 401
@@ -50,10 +60,8 @@ def test_create_metric(client, session):
 
 
 def test_get_metrics(client, user, session):
-    session.exec(delete(MetricEntity))
-    session.add(MetricEntity(user=user, name="one"))
-    session.add(MetricEntity(user=user, name="two"))
-    session.commit()
+    create_metric(session, user, "one")
+    create_metric(session, user, "two", clear=False)
 
     headers = {config.AUTH_HEADER: VALID_TOKEN}
     response = client.get(f"{config.API_PREFIX}{config.METRICS_URI}", headers=headers)
@@ -67,12 +75,7 @@ def test_get_metrics(client, user, session):
 
 
 def test_add_value(client, session, user):
-    session.exec(delete(MetricEntity))
-    metric = MetricEntity(user=user, name="one")
-    session.add(metric)
-    session.commit()
-    session.refresh(metric)
-    metric_id = metric.id
+    metric = create_metric(session, user, "one")
     values_uri = config.VALUES_URI.replace("{metric_id}", str(metric.id))
 
     headers = {config.AUTH_HEADER: str(user.token)}
@@ -82,7 +85,7 @@ def test_add_value(client, session, user):
     )
     assert response.status_code == 200
     stats = session.exec(
-        select(ValueEntity).join(MetricEntity).where(MetricEntity.id == metric_id)
+        select(ValueEntity).join(MetricEntity).where(MetricEntity.id == metric.id)
     ).all()
     assert stats is not None
     assert len(stats) == 1
