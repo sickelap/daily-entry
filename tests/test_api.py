@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from app import config
-from app.model import ValueEntity, UserEntity
+from app.model import MetricEntity, ValueEntity, UserEntity
 from dateutil import parser
 from fastapi.testclient import TestClient
 from sqlmodel import Session, delete, select
@@ -57,6 +57,24 @@ def test_add_stat(client, session):
     assert stats is not None
     assert len(stats) == 1
     assert float(stats[0].value) == 123.4
+
+
+def test_create_metric(client, session):
+    session.exec(delete(MetricEntity))
+    headers = {config.AUTH_HEADER: VALID_TOKEN}
+    payload = {"name": "height"}
+    response = client.post(
+        f"{config.API_PREFIX}{config.CREATE_METRIC_URI}", headers=headers, json=payload
+    )
+    assert response.status_code == 200
+    metrics = session.exec(
+        select(MetricEntity)
+        .join(UserEntity)
+        .where(UserEntity.token == UUID(VALID_TOKEN))
+    ).all()
+    assert metrics is not None
+    assert len(metrics) == 1
+    assert metrics[0].name == "height"
 
 
 def test_import_stats(client, session):

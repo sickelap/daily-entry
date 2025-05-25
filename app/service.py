@@ -7,6 +7,8 @@ from app import exceptions
 from app.db import get_session
 from app.model import (
     AddStatRequest,
+    CreateMetricRequest,
+    MetricEntity,
     Stat,
     ValueEntity,
     UserEntity,
@@ -93,3 +95,14 @@ def rotate_user_token(db: Session, user: UserEntity) -> str:
     db.commit()
     db.refresh(user)
     return str(user.token)
+
+
+def create_user_metric(
+    db: Session, user: UserEntity, payload: CreateMetricRequest
+) -> MetricEntity:
+    metric = MetricEntity(user=user, name=payload.name)
+    db.add(metric)
+    db.commit()
+    db.refresh(metric)
+    return metric
+    pass

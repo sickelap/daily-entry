@@ -60,3 +60,11 @@ class UserRegisterRequest(EmailAndPassword):
 
 class UserLoginRequest(EmailAndPassword):
     pass
+
+
+class CreateMetricRequest(BaseModel):
+    name: str
+
+
+class MetricResponse(BaseModel):
+    name: str

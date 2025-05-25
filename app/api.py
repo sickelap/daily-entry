@@ -4,6 +4,8 @@ from app import config
 from app.db import get_session
 from app.model import (
     AddStatRequest,
+    CreateMetricRequest,
+    MetricResponse,
     Stat,
     UserEntity,
     UserLoginRequest,
@@ -12,6 +14,7 @@ from app.model import (
 from app.service import (
     add_user_stat,
     create_user,
+    create_user_metric,
     get_user,
     get_user_token,
     import_user_stats,
@@ -69,3 +72,12 @@ async def rotate_token(
 ):
     new_token = rotate_user_token(db, user)
     return {config.AUTH_HEADER: new_token}
+
+
+@router.post(config.CREATE_METRIC_URI, response_model=MetricResponse)
+async def create_metric(
+    user: Annotated[UserEntity, Depends(get_user)],
+    db: Annotated[Session, Depends(get_session)],
+    payload: CreateMetricRequest,
+):
+    return create_user_metric(db, user, payload)
