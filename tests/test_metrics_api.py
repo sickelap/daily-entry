@@ -140,3 +140,22 @@ def test_add_values_with_str_timestamp(client, session, user):
         )
         assert parsed_timestamp == values_in_db[index].timestamp
         assert entry["value"] == float(values_in_db[index].value)
+
+
+def test_get_metric_values(client, session, user):
+    metric = create_metric(
+        session,
+        user,
+        "one",
+        [
+            {"timestamp": "01/11/2025 08:01:55", "value": 123.4},
+            {"timestamp": "02/11/2025 09:19:28", "value": 123.5},
+            {"timestamp": "03/11/2025 10:11:11", "value": 123.6},
+        ],
+    )
+    values_uri = config.VALUES_URI.replace("{metric_id}", str(metric.id))
+    headers = {config.AUTH_HEADER: VALID_TOKEN}
+    response = client.get(f"{config.API_PREFIX}{values_uri}", headers=headers)
+    assert response.status_code == 200
+    values = response.json()
+    assert len(values) == 3

@@ -117,3 +117,8 @@ def add_values(db: Session, metric: MetricEntity, payload: list[ValueRequest]):
         stat = _create_value_entity(metric, entry.value, timestamp=entry.timestamp)
         db.add(stat)
     db.commit()
+
+
+def get_values(db: Session, metric: MetricEntity):
+    stmt = select(ValueEntity).where(ValueEntity.metric == metric)
+    return db.exec(stmt).all()

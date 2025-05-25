@@ -67,3 +67,11 @@ async def add_values(
     payload: list[ValueRequest] = Body(...),
 ):
     return service.add_values(db, metric, payload)
+
+
+@router.get(config.VALUES_URI)
+async def get_values(
+    db: Annotated[Session, Depends(db.get_session)],
+    metric: Annotated[MetricEntity, Depends(service.get_metric)],
+):
+    return service.get_values(db, metric)
