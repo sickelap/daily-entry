@@ -148,9 +148,9 @@ def test_get_metric_values(client, session, user):
         user,
         "one",
         [
-            {"timestamp": "01/11/2025 08:01:55", "value": 123.4},
-            {"timestamp": "02/11/2025 09:19:28", "value": 123.5},
-            {"timestamp": "03/11/2025 10:11:11", "value": 123.6},
+            {"timestamp": 1, "value": 123.4},
+            {"timestamp": 2, "value": 123.5},
+            {"timestamp": 3, "value": 123.6},
         ],
     )
     values_uri = config.VALUES_URI.replace("{metric_id}", str(metric.id))
@@ -159,3 +159,15 @@ def test_get_metric_values(client, session, user):
     assert response.status_code == 200
     values = response.json()
     assert len(values) == 3
+    assert [{k: v for k, v in row.items() if k != "id"} for row in values] == [
+        {"metric_id": metric.id, "timestamp": 1, "value": "123.4"},
+        {"metric_id": metric.id, "timestamp": 2, "value": "123.5"},
+        {"metric_id": metric.id, "timestamp": 3, "value": "123.6"},
+    ]
+
+
+def test_get_values_for_non_existent_metric(client):
+    values_uri = config.VALUES_URI.replace("{metric_id}", "99999999")
+    headers = {config.AUTH_HEADER: VALID_TOKEN}
+    response = client.get(f"{config.API_PREFIX}{values_uri}", headers=headers)
+    assert response.status_code == 404
