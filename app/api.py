@@ -25,7 +25,7 @@ router = APIRouter(prefix=config.API_PREFIX)
 
 @router.get(config.GET_STATS_URI)
 async def get_stats(user: Annotated[UserEntity, Depends(get_user)]):
-    return user.stats
+    return user.values
 
 
 @router.post(config.ADD_STAT_URI)
