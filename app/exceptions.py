@@ -12,3 +12,7 @@ class Unauthorized(Exception):
 
 class NotFound(Exception):
     pass
+
+
+class InvalidToken(Exception):
+    pass

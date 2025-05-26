@@ -1,11 +1,12 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 from dateutil import parser
+from jose import jwt
 from app import config
 from app.model import MetricEntity, UserEntity, ValueEntity
 from sqlmodel import delete, select
 from tests.conftest import (
-    INVALID_TOKEN,
-    VALID_TOKEN,
+    TEST_USER_EMAIL,
+    TEST_USER_PASSWORD,
 )
 
 
@@ -15,6 +16,19 @@ def isuuid(value: str) -> bool:
         return True
     except Exception:
         return False
+
+
+def get_access_auth_headers(
+    client, email=TEST_USER_EMAIL, password=TEST_USER_PASSWORD, create=False
+):
+    payload = {"email": email, "password": password}
+    if create:
+        response = client.post(
+            f"{config.API_PREFIX}{config.REGISTER_URI}", json=payload
+        )
+    else:
+        response = client.post(f"{config.API_PREFIX}{config.LOGIN_URI}", json=payload)
+    return {"Authorization": f"Bearer {response.json()['access_token']}"}
 
 
 def create_metric(session, user, name, values=[], clear=True):
@@ -37,26 +51,23 @@ def test_get_metrics_as_anonymous(client):
 
 
 def test_get_metrics_with_invalid_token(client):
+    token = jwt.encode({}, "some_secret")
     response = client.get(
         f"{config.API_PREFIX}{config.METRICS_URI}",
-        headers={config.AUTH_HEADER: INVALID_TOKEN},
+        headers={"Authorization": f"Bearer {token}"},
     )
-    assert response.status_code == 401
+    assert response.status_code == 403
 
 
-def test_create_metric(client, session):
+def test_create_metric(client, session, user):
     session.exec(delete(MetricEntity))
-    headers = {config.AUTH_HEADER: VALID_TOKEN}
     payload = {"name": "height"}
+    headers = get_access_auth_headers(client)
     response = client.post(
         f"{config.API_PREFIX}{config.METRICS_URI}", headers=headers, json=payload
     )
     assert response.status_code == 200
-    metrics = session.exec(
-        select(MetricEntity)
-        .join(UserEntity)
-        .where(UserEntity.token == UUID(VALID_TOKEN))
-    ).all()
+    metrics = session.exec(select(MetricEntity).where(MetricEntity.user == user)).all()
     assert metrics is not None
     assert len(metrics) == 1
     assert metrics[0].name == "height"
@@ -66,14 +77,10 @@ def test_get_metrics(client, user, session):
     create_metric(session, user, "one")
     create_metric(session, user, "two", clear=False)
 
-    headers = {config.AUTH_HEADER: VALID_TOKEN}
+    headers = get_access_auth_headers(client)
     response = client.get(f"{config.API_PREFIX}{config.METRICS_URI}", headers=headers)
     assert response.status_code == 200
-    metrics = session.exec(
-        select(MetricEntity)
-        .join(UserEntity)
-        .where(UserEntity.token == UUID(VALID_TOKEN))
-    ).all()
+    metrics = session.exec(select(MetricEntity).where(MetricEntity.user == user)).all()
     assert len(response.json()) == len(metrics)
 
 
@@ -81,7 +88,7 @@ def test_add_values_without_timestamp(client, session, user):
     metric = create_metric(session, user, "three")
     values_uri = config.VALUES_URI.replace("{metric_id}", str(metric.id))
 
-    headers = {config.AUTH_HEADER: str(user.token)}
+    headers = get_access_auth_headers(client)
     payload = [{"value": 123.4}]
     response = client.post(
         f"{config.API_PREFIX}{values_uri}", headers=headers, json=payload
@@ -95,7 +102,7 @@ def test_add_values_without_timestamp(client, session, user):
 
 def test_add_values_with_int_timestamp(client, session, user):
     metric = create_metric(session, user, "four")
-    headers = {config.AUTH_HEADER: VALID_TOKEN}
+    headers = get_access_auth_headers(client)
     payload = [
         {"timestamp": 1, "value": 123.4},
         {"timestamp": 2, "value": 123.5},
@@ -119,7 +126,7 @@ def test_add_values_with_int_timestamp(client, session, user):
 def test_add_values_with_str_timestamp(client, session, user):
     metric = create_metric(session, user, "one")
     values_uri = config.VALUES_URI.replace("{metric_id}", str(metric.id))
-    headers = {config.AUTH_HEADER: VALID_TOKEN}
+    headers = get_access_auth_headers(client)
     payload = [
         {"timestamp": "01/11/2025 08:01:55", "value": 123.4},
         {"timestamp": "02/11/2025 09:19:28", "value": 123.5},
@@ -154,20 +161,31 @@ def test_get_metric_values(client, session, user):
         ],
     )
     values_uri = config.VALUES_URI.replace("{metric_id}", str(metric.id))
-    headers = {config.AUTH_HEADER: VALID_TOKEN}
+    headers = get_access_auth_headers(client)
     response = client.get(f"{config.API_PREFIX}{values_uri}", headers=headers)
     assert response.status_code == 200
     values = response.json()
     assert len(values) == 3
     assert [{k: v for k, v in row.items() if k != "id"} for row in values] == [
-        {"metric_id": metric.id, "timestamp": 1, "value": "123.4"},
-        {"metric_id": metric.id, "timestamp": 2, "value": "123.5"},
-        {"metric_id": metric.id, "timestamp": 3, "value": "123.6"},
+        {"metric_id": str(metric.id), "timestamp": 1, "value": "123.4"},
+        {"metric_id": str(metric.id), "timestamp": 2, "value": "123.5"},
+        {"metric_id": str(metric.id), "timestamp": 3, "value": "123.6"},
     ]
 
 
 def test_get_values_for_non_existent_metric(client):
-    values_uri = config.VALUES_URI.replace("{metric_id}", "99999999")
-    headers = {config.AUTH_HEADER: VALID_TOKEN}
+    headers = get_access_auth_headers(client)
+    values_uri = config.VALUES_URI.replace("{metric_id}", str(uuid4()))
     response = client.get(f"{config.API_PREFIX}{values_uri}", headers=headers)
     assert response.status_code == 404
+
+
+def test_access_resource_after_user_deleted(client, session):
+    headers = get_access_auth_headers(
+        client, email="one@one.one", password="onepw", create=True
+    )
+    session.delete(
+        session.exec(select(UserEntity).where(UserEntity.email == "one@one.one")).one()
+    )
+    response = client.get(f"{config.API_PREFIX}{config.METRICS_URI}", headers=headers)
+    assert response.status_code == 401

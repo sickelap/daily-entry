@@ -1,14 +1,12 @@
 from uuid import UUID
 
-
-from app import config
-from app.model import UserEntity
 from fastapi.testclient import TestClient
 from sqlmodel import Session, select
-from tests.conftest import (
-    TEST_USER_EMAIL,
-    TEST_USER_PASSWORD,
-)
+
+
+from app import config
+from .conftest import TEST_USER_PASSWORD, TEST_USER_EMAIL
+from app.model import UserEntity
 
 
 def isuuid(value: str) -> bool:
@@ -19,12 +17,19 @@ def isuuid(value: str) -> bool:
         return False
 
 
+def login_user(client, email=TEST_USER_EMAIL, password=TEST_USER_PASSWORD):
+    payload = {"email": email, "password": password}
+    response = client.post(f"{config.API_PREFIX}{config.LOGIN_URI}", json=payload)
+    return response.json()
+
+
 def test_register_user(client: TestClient, session: Session):
     payload = {"email": "user@local.host", "password": "userpw"}
     response = client.post(f"{config.API_PREFIX}{config.REGISTER_URI}", json=payload)
-    assert response.status_code == 201
-    assert response.headers.get(config.AUTH_HEADER) is not None
-    assert isuuid(response.headers.get(config.AUTH_HEADER))
+    assert response.status_code == 200
+    assert len(response.json().keys()) == 2
+    assert "access_token" in response.json().keys()
+    assert "refresh_token" in response.json().keys()
     user_in_db = session.exec(
         select(UserEntity).where(UserEntity.email == "user@local.host")
     ).one_or_none()
@@ -41,7 +46,9 @@ def test_login_user(client: TestClient):
     payload = {"email": TEST_USER_EMAIL, "password": TEST_USER_PASSWORD}
     response = client.post(f"{config.API_PREFIX}{config.LOGIN_URI}", json=payload)
     assert response.status_code == 200
-    assert isuuid(response.json().get(config.AUTH_HEADER)), "not a token"
+    assert len(response.json().keys()) == 2
+    assert "access_token" in response.json().keys()
+    assert "refresh_token" in response.json().keys()
 
 
 def test_login_user_with_invalid_credentials(client: TestClient):
@@ -50,17 +57,21 @@ def test_login_user_with_invalid_credentials(client: TestClient):
     assert response.status_code == 401
 
 
-def test_rotate_token(client, session):
-    user = UserEntity(email="jack@local.host", password="jackpw")
-    session.add(user)
-    session.commit()
-    session.refresh(user)
-
-    headers = {config.AUTH_HEADER: str(user.token)}
+def test_refresh_token(client):
+    tokens = login_user(client)
     response = client.post(
-        f"{config.API_PREFIX}{config.REFRESH_TOKEN_URI}", headers=headers
+        f"{config.API_PREFIX}{config.REFRESH_TOKEN_URI}",
+        headers={"Authorization": f"Bearer {tokens['refresh_token']}"},
     )
     assert response.status_code == 200
-    refreshed_token = response.json().get(config.AUTH_HEADER)
-    assert isuuid(refreshed_token), "not a token"
-    assert refreshed_token != user.token
+    assert response.json()["access_token"] != tokens["access_token"]
+    assert response.json()["refresh_token"] != tokens["refresh_token"]
+
+
+def test_refresh_with_access_token(client):
+    tokens = login_user(client)
+    response = client.post(
+        f"{config.API_PREFIX}{config.REFRESH_TOKEN_URI}",
+        headers={"Authorization": f"Bearer {tokens['access_token']}"},
+    )
+    assert response.status_code == 403

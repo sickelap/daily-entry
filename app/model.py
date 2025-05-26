@@ -10,7 +10,7 @@ from sqlmodel import Field, Relationship, SQLModel
 
 class UserEntity(SQLModel, table=True):
     __tablename__ = "users"  # type: ignore
-    id: int | None = Field(primary_key=True, default=None)
+    id: UUID | None = Field(primary_key=True, default_factory=uuid4)
     token: UUID | None = Field(default_factory=uuid4)
     email: EmailStr = Field(sa_column=Column(String, unique=True, nullable=False))
     password: str
@@ -19,8 +19,8 @@ class UserEntity(SQLModel, table=True):
 
 class MetricEntity(SQLModel, table=True):
     __tablename__ = "metrics"  # type: ignore
-    id: int | None = Field(default=None, primary_key=True)
-    user_id: int = Field(default=None, foreign_key="users.id")
+    id: UUID | None = Field(primary_key=True, default_factory=uuid4)
+    user_id: UUID = Field(default=None, foreign_key="users.id")
     user: UserEntity = Relationship(back_populates="metrics")
     name: str = Field(index=True)
     values: list["ValueEntity"] = Relationship(
@@ -30,12 +30,12 @@ class MetricEntity(SQLModel, table=True):
 
 class ValueEntity(SQLModel, table=True):
     __tablename__ = "values"  # type: ignore
-    id: int | None = Field(primary_key=True, default=None)
+    id: UUID | None = Field(primary_key=True, default_factory=uuid4)
     timestamp: int = Field(
         default_factory=lambda: int(datetime.now(timezone.utc).timestamp())
     )
     value: Decimal = Field(default=0, max_digits=4, decimal_places=1)
-    metric_id: Optional[int] = Field(
+    metric_id: Optional[UUID] = Field(
         default=None, foreign_key="metrics.id", ondelete="CASCADE"
     )
     metric: MetricEntity = Relationship(back_populates="values")
@@ -64,5 +64,17 @@ class CreateMetricRequest(BaseModel):
 
 
 class MetricResponse(BaseModel):
-    id: int
+    id: UUID
     name: str
+
+
+class AccessToken(BaseModel):
+    access_token: Optional[str] = None
+
+
+class RefreshToken(BaseModel):
+    refresh_token: str
+
+
+class Tokens(AccessToken, RefreshToken):
+    pass

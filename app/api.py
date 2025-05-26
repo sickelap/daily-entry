@@ -1,18 +1,20 @@
 from typing import Annotated
 
+
 from app import config
 from app import db
 from app.model import (
     CreateMetricRequest,
+    EmailAndPassword,
     MetricEntity,
     MetricResponse,
+    Tokens,
     UserEntity,
-    UserLoginRequest,
     UserRegisterRequest,
     ValueRequest,
 )
 from app import service
-from fastapi import APIRouter, Body, Depends, Response
+from fastapi import APIRouter, Body, Depends
 from sqlmodel import Session
 
 router = APIRouter(prefix=config.API_PREFIX)
@@ -22,25 +24,21 @@ router = APIRouter(prefix=config.API_PREFIX)
 async def register(
     db: Annotated[Session, Depends(db.get_session)], payload: UserRegisterRequest
 ):
-    token = service.create_user(db, payload)
-    return Response(status_code=201, headers={config.AUTH_HEADER: token})
+    return service.create_user(db, payload)
 
 
 @router.post(config.LOGIN_URI)
 async def login(
-    db: Annotated[Session, Depends(db.get_session)], payload: UserLoginRequest
+    db: Annotated[Session, Depends(db.get_session)], data: EmailAndPassword
 ):
-    token = service.get_user_token(db, payload)
-    return {config.AUTH_HEADER: token}
+    return service.login(db, data)
 
 
 @router.post(config.REFRESH_TOKEN_URI)
-async def rotate_token(
-    user: Annotated[UserEntity, Depends(service.get_user)],
-    db: Annotated[Session, Depends(db.get_session)],
-):
-    new_token = service.rotate_user_token(db, user)
-    return {config.AUTH_HEADER: new_token}
+async def refresh_token(
+    token: Annotated[str, Depends(service.oauth2_scheme)],
+) -> Tokens:
+    return service.refresh_token(token)
 
 
 @router.post(config.METRICS_URI, response_model=MetricResponse)
